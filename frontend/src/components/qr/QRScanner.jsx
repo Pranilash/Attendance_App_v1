@@ -9,18 +9,30 @@ const QRScanner = ({ onScanSuccess, onScanError }) => {
   const [scanStatus, setScanStatus] = useState(null); // 'success', 'error', null
   const scannerRef = useRef(null);
   const html5QrCodeRef = useRef(null);
+  const isScanningRef = useRef(false);
 
   useEffect(() => {
     return () => {
-      if (html5QrCodeRef.current && isScanning) {
-        html5QrCodeRef.current.stop().catch((err) => console.error('Error stopping scanner:', err));
+      // Cleanup on unmount - check if scanner is actually running
+      if (html5QrCodeRef.current && isScanningRef.current) {
+        html5QrCodeRef.current.stop().catch(() => {});
       }
     };
-  }, [isScanning]);
+  }, []);
 
   const startScanner = async () => {
     try {
+      // Clean up any existing scanner instance
+      if (html5QrCodeRef.current && isScanningRef.current) {
+        try {
+          await html5QrCodeRef.current.stop();
+        } catch (e) {
+          // Ignore errors when stopping
+        }
+      }
+      
       html5QrCodeRef.current = new Html5Qrcode('qr-reader');
+      isScanningRef.current = true;
       
       await html5QrCodeRef.current.start(
         { facingMode: 'environment' },
@@ -39,9 +51,12 @@ const QRScanner = ({ onScanSuccess, onScanError }) => {
           }
           
           // Stop scanner after successful scan
-          html5QrCodeRef.current.stop().then(() => {
-            setIsScanning(false);
-          });
+          if (html5QrCodeRef.current && isScanningRef.current) {
+            html5QrCodeRef.current.stop().then(() => {
+              setIsScanning(false);
+              isScanningRef.current = false;
+            }).catch(() => {});
+          }
         },
         (errorMessage) => {
           // Ignore frequent scan errors (no QR found)
@@ -56,6 +71,7 @@ const QRScanner = ({ onScanSuccess, onScanError }) => {
       setScanStatus(null);
     } catch (err) {
       console.error('Error starting scanner:', err);
+      isScanningRef.current = false;
       toast.error('Failed to access camera. Please check permissions.');
       if (onScanError) {
         onScanError(err);
@@ -64,12 +80,14 @@ const QRScanner = ({ onScanSuccess, onScanError }) => {
   };
 
   const stopScanner = async () => {
-    if (html5QrCodeRef.current && isScanning) {
+    if (html5QrCodeRef.current && isScanningRef.current) {
       try {
         await html5QrCodeRef.current.stop();
         setIsScanning(false);
+        isScanningRef.current = false;
       } catch (err) {
         console.error('Error stopping scanner:', err);
+        isScanningRef.current = false;
       }
     }
   };

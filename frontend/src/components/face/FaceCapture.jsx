@@ -16,6 +16,7 @@ const FaceCapture = ({ onCapture, mode = 'verification' }) => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
+  const isStreamingRef = useRef(false);
 
   const livenessInstructions = [
     { action: 'blink', instruction: 'Blink your eyes slowly', icon: Eye },
@@ -68,6 +69,7 @@ const FaceCapture = ({ onCapture, mode = 'verification' }) => {
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         videoRef.current.play();
+        isStreamingRef.current = true;
         setIsStreaming(true);
         setError(null);
         startFaceDetection();
@@ -85,6 +87,7 @@ const FaceCapture = ({ onCapture, mode = 'verification' }) => {
       streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     }
+    isStreamingRef.current = false;
     setIsStreaming(false);
     setFaceDetected(false);
   };
@@ -92,8 +95,8 @@ const FaceCapture = ({ onCapture, mode = 'verification' }) => {
   // Face detection loop
   const startFaceDetection = () => {
     const detectFace = async () => {
-      if (!videoRef.current || !canvasRef.current || !isStreaming) return;
-
+      if (!videoRef.current || !canvasRef.current || !isStreamingRef.current) return;
+      
       const video = videoRef.current;
       const canvas = canvasRef.current;
 
@@ -114,6 +117,8 @@ const FaceCapture = ({ onCapture, mode = 'verification' }) => {
       const detections = await faceapi
         .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
         .withFaceLandmarks();
+
+      // console.log('1');  
 
       if (detections.length > 0) {
         setFaceDetected(true);
@@ -151,11 +156,11 @@ const FaceCapture = ({ onCapture, mode = 'verification' }) => {
     }
 
     setLivenessComplete(true);
-    await captureFace();
+    await captureFace(true);
   };
 
   // Capture face embedding
-  const captureFace = async () => {
+  const captureFace = async (livenessDone = false) => {
     if (!videoRef.current || !faceDetected) {
       toast.error('No face detected');
       setIsCapturing(false);
@@ -196,7 +201,7 @@ const FaceCapture = ({ onCapture, mode = 'verification' }) => {
         onCapture({
           embedding,
           image: imageBase64,
-          livenessPassed: livenessComplete,
+          livenessPassed: livenessDone,
         });
       }
     } catch (err) {

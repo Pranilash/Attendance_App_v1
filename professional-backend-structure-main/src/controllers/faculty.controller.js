@@ -398,6 +398,12 @@ const getActiveSession = asyncHandler(async (req, res) => {
     .update(`${session._id}:${timestamp}`)
     .digest('hex');
 
+  // Get real attendance count
+  const presentCount = await Attendance.countDocuments({
+    sessionId: session._id,
+    status: 'present',
+  });
+
   return res.status(200).json(
     new ApiResponse(
       200,
@@ -407,7 +413,7 @@ const getActiveSession = asyncHandler(async (req, res) => {
         startTime: session.startTime,
         qrSignature: signature,
         timestamp,
-        presentCount: session.presentCount || 0,
+        presentCount,
       },
       'Active session found'
     )

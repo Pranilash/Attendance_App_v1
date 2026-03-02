@@ -64,10 +64,10 @@ const verifyQR = asyncHandler(async (req, res) => {
     throw new ApiError(400, 'Session has ended');
   }
 
-  // Verify timestamp (15 seconds expiry)
+  // Verify timestamp (30 seconds expiry to account for scan + network latency)
   const currentTime = Date.now();
   const qrAge = currentTime - timestamp;
-  if (qrAge > 15000) {
+  if (qrAge > 30000) {
     throw new ApiError(400, 'QR code has expired. Please scan again.');
   }
 

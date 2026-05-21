@@ -20,6 +20,15 @@ A secure attendance management system using **QR codes** and **face verification
 | **Backend** | Node.js, Express.js, MongoDB (Mongoose), JWT (access + refresh tokens in cookies) |
 | **Security** | Helmet, CORS, rate limiting, HMAC-signed QR codes, bcrypt, Zod validation |
 
+## Security Features
+
+- JWT-based authentication with role-based access control
+- Rotating HMAC-signed QR codes for secure attendance sessions
+- Real-time face verification using face-api.js
+- Liveness detection using blink and head-movement checks
+- Helmet, CORS, rate limiting, and bcrypt-based backend security
+- Zod validation for request sanitization and protection
+
 ## Project Structure
 
 ```

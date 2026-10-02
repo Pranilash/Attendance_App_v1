@@ -118,8 +118,15 @@ const attendanceSchema = new Schema(
   },
   {
     timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
   }
 );
+
+// Virtual for backwards compatibility with code expecting timestamp
+attendanceSchema.virtual("timestamp").get(function () {
+  return this.markedAt;
+});
 
 // Compound index to prevent duplicate attendance for same session and student
 attendanceSchema.index({ sessionId: 1, studentId: 1 }, { unique: true });

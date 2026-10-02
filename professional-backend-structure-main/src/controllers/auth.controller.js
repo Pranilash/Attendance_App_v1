@@ -64,6 +64,11 @@ const register = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Name, email, password, role, and department are required");
   }
 
+  // Prevent privilege escalation: Admin accounts cannot be created publicly
+  if (role === "admin") {
+    throw new ApiError(403, "Administrator accounts can only be created by existing administrators");
+  }
+
   // Check if department exists
   const departmentExists = await Department.findById(department);
   if (!departmentExists) {

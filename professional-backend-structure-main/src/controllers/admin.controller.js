@@ -178,23 +178,28 @@ const updateFaculty = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { name, email, password, department, isActive } = req.body;
 
-  const updateData = { name, email, department, isActive };
-  if (password) {
-    updateData.password = password; // Will be hashed by pre-save middleware
-  }
-
-  const faculty = await AttendanceUser.findByIdAndUpdate(id, updateData, {
-    new: true,
-    runValidators: true,
-  }).select('-password -refreshToken -faceEmbedding');
-
+  const faculty = await AttendanceUser.findById(id);
   if (!faculty) {
     throw new ApiError(404, 'Faculty not found');
   }
 
+  if (name !== undefined) faculty.name = name;
+  if (email !== undefined) faculty.email = email;
+  if (department !== undefined) faculty.department = department;
+  if (isActive !== undefined) faculty.isActive = isActive;
+  if (password) {
+    faculty.password = password; // Triggers pre-save bcrypt hash
+  }
+
+  await faculty.save();
+
+  const updatedFaculty = await AttendanceUser.findById(id)
+    .select('-password -refreshToken -faceEmbedding')
+    .populate('department', 'name code');
+
   return res
     .status(200)
-    .json(new ApiResponse(200, faculty, 'Faculty updated successfully'));
+    .json(new ApiResponse(200, updatedFaculty, 'Faculty updated successfully'));
 });
 
 /**
@@ -321,23 +326,29 @@ const updateStudent = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { name, email, password, department, enrollmentNumber, isActive } = req.body;
 
-  const updateData = { name, email, department, enrollmentNumber, isActive };
-  if (password) {
-    updateData.password = password;
-  }
-
-  const student = await AttendanceUser.findByIdAndUpdate(id, updateData, {
-    new: true,
-    runValidators: true,
-  }).select('-password -refreshToken -faceEmbedding');
-
+  const student = await AttendanceUser.findById(id);
   if (!student) {
     throw new ApiError(404, 'Student not found');
   }
 
+  if (name !== undefined) student.name = name;
+  if (email !== undefined) student.email = email;
+  if (department !== undefined) student.department = department;
+  if (enrollmentNumber !== undefined) student.enrollmentNumber = enrollmentNumber;
+  if (isActive !== undefined) student.isActive = isActive;
+  if (password) {
+    student.password = password; // Triggers pre-save bcrypt hash
+  }
+
+  await student.save();
+
+  const updatedStudent = await AttendanceUser.findById(id)
+    .select('-password -refreshToken -faceEmbedding')
+    .populate('department', 'name code');
+
   return res
     .status(200)
-    .json(new ApiResponse(200, student, 'Student updated successfully'));
+    .json(new ApiResponse(200, updatedStudent, 'Student updated successfully'));
 });
 
 /**
@@ -376,11 +387,11 @@ const getStats = asyncHandler(async (req, res) => {
   const totalDepartments = await Department.countDocuments({ isActive: true });
   const totalClasses = await Class.countDocuments({ isActive: true });
 
-  // Today's attendance
+  // Today's attendance using canonical markedAt
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const todayAttendance = await Attendance.countDocuments({
-    timestamp: { $gte: today },
+    markedAt: { $gte: today },
     status: 'present',
   });
 

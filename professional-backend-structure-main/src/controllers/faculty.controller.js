@@ -578,7 +578,7 @@ const getSessionReport = asyncHandler(async (req, res) => {
 
   const attendance = await Attendance.find({ sessionId })
     .populate('studentId', 'name email enrollmentNumber')
-    .sort({ timestamp: 1 });
+    .sort({ markedAt: 1 });
 
   return res
     .status(200)

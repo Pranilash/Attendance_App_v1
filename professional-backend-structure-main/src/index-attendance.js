@@ -34,7 +34,7 @@ connectDB()
       console.log("");
       console.log("API Endpoints:");
       console.log("  Health: http://localhost:" + PORT + "/health");
-      console.log("  Auth:   http://localhost:" + PORT + "/api/v1/auth");
+      console.log("  Auth:   http://localhost:" + PORT + "/api/auth");
     });
   })
   .catch((err) => {

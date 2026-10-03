@@ -274,9 +274,11 @@ const seedDatabase = async () => {
     console.log("=====================================================");
 
     console.log("\n✅ Seeding completed successfully!");
+    await mongoose.disconnect();
     process.exit(0);
   } catch (error) {
     console.error("Error seeding database:", error);
+    await mongoose.disconnect();
     process.exit(1);
   }
 };

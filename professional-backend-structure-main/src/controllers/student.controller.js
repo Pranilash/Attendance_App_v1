@@ -151,23 +151,13 @@ const verifyFace = asyncHandler(async (req, res) => {
   const { sessionId, embedding, image, livenessPassed } = req.body;
   const studentId = req.user._id;
 
-  // Validate session
-  const session = await AttendanceSession.findById(sessionId);
+  // Validate session - must select qrSecret explicitly since it has select: false
+  const session = await AttendanceSession.findById(sessionId).select('+qrSecret');
   if (!session || !session.isActive) {
     throw new ApiError(400, 'Session not found or has ended');
   }
 
-  // Check if already marked
-  const existingAttendance = await Attendance.findOne({
-    sessionId,
-    studentId,
-  });
-
-  if (existingAttendance) {
-    throw new ApiError(400, 'Attendance already marked for this session');
-  }
-
-  // Validate and consume single-use server challenge
+  // Validate and consume single-use server challenge atomically
   const challenge = await AttendanceChallenge.findOneAndUpdate(
     {
       studentId,
@@ -186,6 +176,35 @@ const verifyFace = asyncHandler(async (req, res) => {
       400,
       'QR verification challenge expired or missing. Please scan the QR code again.'
     );
+  }
+
+  // Atomically create attendance record - prevents double-marking race condition
+  let attendance;
+  try {
+    attendance = await Attendance.create({
+      sessionId,
+      studentId,
+      classId: session.classId,
+      status: 'present',
+      qrVerified: true,
+      faceVerified: true,
+      livenessScore: 1,
+      qrScannedAt: challenge.createdAt || new Date(),
+      faceVerifiedAt: new Date(),
+      markedAt: new Date(),
+      faceVerificationDetails: {
+        similarityScore: typeof result.distance === 'number' ? result.distance : 0.95,
+        livenessChecks: {
+          blink: true,
+          headMovement: true,
+        },
+      },
+    });
+  } catch (err) {
+    if (err.code === 11000) {
+      throw new ApiError(400, 'Attendance already marked for this session');
+    }
+    throw err;
   }
 
   // Get stored face embedding
@@ -207,29 +226,6 @@ const verifyFace = asyncHandler(async (req, res) => {
   if (!livenessPassed) {
     throw new ApiError(400, 'Liveness check failed. Please try again.');
   }
-
-  const now = new Date();
-
-  // Create attendance record with canonical markedAt
-  const attendance = await Attendance.create({
-    sessionId,
-    studentId,
-    classId: session.classId,
-    status: 'present',
-    qrVerified: true,
-    faceVerified: true,
-    livenessScore: 1,
-    qrScannedAt: challenge.createdAt || now,
-    faceVerifiedAt: now,
-    markedAt: now,
-    faceVerificationDetails: {
-      similarityScore: typeof result.distance === 'number' ? result.distance : 0.95,
-      livenessChecks: {
-        blink: true,
-        headMovement: true,
-      },
-    },
-  });
 
   // Get class info
   const classData = await Class.findById(session.classId);

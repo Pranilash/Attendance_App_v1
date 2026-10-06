@@ -1,34 +1,30 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "services": {
-    "frontend": {
-      "root": "frontend",
-      "framework": "vite"
+  "version": 2,
+  "builds": [
+    {
+      "src": "professional-backend-structure-main/src/index-attendance.js",
+      "use": "@vercel/node"
     },
-    "backend": {
-      "root": "professional-backend-structure-main",
-      "framework": "express",
-      "entrypoint": "src/index-attendance.js"
+    {
+      "src": "frontend/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
     }
-  },
-  "rewrites": [
+  ],
+  "routes": [
     {
-      "source": "/api/(.*)",
-      "destination": {
-        "service": "backend"
-      }
+      "src": "/api/(.*)",
+      "dest": "professional-backend-structure-main/src/index-attendance.js"
     },
     {
-      "source": "/health",
-      "destination": {
-        "service": "backend"
-      }
+      "src": "/health",
+      "dest": "professional-backend-structure-main/src/index-attendance.js"
     },
     {
-      "source": "/(.*)",
-      "destination": {
-        "service": "frontend"
-      }
+      "src": "/(.*)",
+      "dest": "frontend/$1"
     }
   ]
 }

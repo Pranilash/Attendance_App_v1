@@ -178,6 +178,26 @@ const verifyFace = asyncHandler(async (req, res) => {
     );
   }
 
+  // Get stored face embedding
+  const student = await AttendanceUser.findById(studentId).select('+faceEmbedding');
+  if (!student || !student.faceEmbedding || student.faceEmbedding.length !== 128) {
+    throw new ApiError(400, 'Face not registered. Please register your face first.');
+  }
+
+  // Compare face embeddings
+  const storedEmbedding = student.faceEmbedding;
+  const result = verifyFaceEmbedding(embedding, storedEmbedding);
+  const faceMatch = result.isMatch;
+
+  if (!faceMatch) {
+    throw new ApiError(400, 'Face verification failed. Face does not match.');
+  }
+
+  // Check liveness
+  if (!livenessPassed) {
+    throw new ApiError(400, 'Liveness check failed. Please try again.');
+  }
+
   // Atomically create attendance record - prevents double-marking race condition
   let attendance;
   try {
@@ -205,26 +225,6 @@ const verifyFace = asyncHandler(async (req, res) => {
       throw new ApiError(400, 'Attendance already marked for this session');
     }
     throw err;
-  }
-
-  // Get stored face embedding
-  const student = await AttendanceUser.findById(studentId).select('+faceEmbedding');
-  if (!student || !student.faceEmbedding || student.faceEmbedding.length !== 128) {
-    throw new ApiError(400, 'Face not registered. Please register your face first.');
-  }
-
-  // Compare face embeddings
-  const storedEmbedding = student.faceEmbedding;
-  const result = verifyFaceEmbedding(embedding, storedEmbedding);
-  const faceMatch = result.isMatch;
-
-  if (!faceMatch) {
-    throw new ApiError(400, 'Face verification failed. Face does not match.');
-  }
-
-  // Check liveness
-  if (!livenessPassed) {
-    throw new ApiError(400, 'Liveness check failed. Please try again.');
   }
 
   // Get class info

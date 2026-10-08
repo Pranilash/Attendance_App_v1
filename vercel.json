@@ -2,7 +2,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "professional-backend-structure-main/src/index-attendance.js",
+      "src": "professional-backend-structure-main/api/index.js",
       "use": "@vercel/node"
     },
     {
@@ -16,11 +16,11 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "professional-backend-structure-main/src/index-attendance.js"
+      "dest": "professional-backend-structure-main/api/index.js"
     },
     {
       "src": "/health",
-      "dest": "professional-backend-structure-main/src/index-attendance.js"
+      "dest": "professional-backend-structure-main/api/index.js"
     },
     {
       "src": "/(.*)",

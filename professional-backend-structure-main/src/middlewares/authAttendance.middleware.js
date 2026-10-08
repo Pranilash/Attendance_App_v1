@@ -76,8 +76,12 @@ export const optionalAuth = asyncHandler(async (req, res, next) => {
     }
     next();
   } catch (error) {
-    // Continue without user if token is invalid
-    next();
+    // Continue without user if token is invalid or expired; forward unexpected errors
+    if (error.name === "JsonWebTokenError" || error.name === "TokenExpiredError") {
+      next();
+    } else {
+      next(error);
+    }
   }
 });
 

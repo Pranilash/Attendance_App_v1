@@ -4,6 +4,10 @@ import { BrowserRouter } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import App from './App.jsx'
 import './index.css'
+import { registerSW } from 'virtual:pwa-register'
+
+// Auto-register service worker for PWA & offline model caching
+registerSW({ immediate: true })
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

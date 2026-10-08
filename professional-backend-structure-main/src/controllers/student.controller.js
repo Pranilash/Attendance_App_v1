@@ -333,7 +333,7 @@ const getAttendanceStats = asyncHandler(async (req, res) => {
   });
 
   // Get absent count
-  const absentCount = totalSessions - presentCount;
+  const absentCount = Math.max(0, totalSessions - presentCount);
 
   // Calculate attendance rate
   const attendanceRate = totalSessions > 0 

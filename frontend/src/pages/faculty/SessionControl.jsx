@@ -51,6 +51,9 @@ const SessionControl = () => {
       await generateQR(session);
 
       // Start QR refresh interval (every 14 seconds, before 15s expiry)
+      if (qrRefreshInterval.current) {
+        clearInterval(qrRefreshInterval.current);
+      }
       qrRefreshInterval.current = setInterval(() => {
         refreshQR(session);
       }, 14000);

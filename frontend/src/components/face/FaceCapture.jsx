@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import * as faceapi from 'face-api.js';
+import * as faceapi from '@vladmandic/face-api';
 import { Camera, RefreshCw, CheckCircle, AlertCircle, Loader2, Eye, Move } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -17,6 +17,8 @@ const FaceCapture = ({ onCapture, mode = 'verification' }) => {
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
   const isStreamingRef = useRef(false);
+  const animationFrameRef = useRef(null);
+  const isDetectingRef = useRef(false);
 
   const livenessInstructions = [
     { action: 'blink', instruction: 'Blink your eyes slowly', icon: Eye },
@@ -28,9 +30,9 @@ const FaceCapture = ({ onCapture, mode = 'verification' }) => {
   useEffect(() => {
     const loadModels = async () => {
       try {
-        // Load models from CDN
-        const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model';
-        
+        // Load models from CDN (@vladmandic/face-api model files)
+        const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.15/model/';
+
         await Promise.all([
           faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
           faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
@@ -50,6 +52,10 @@ const FaceCapture = ({ onCapture, mode = 'verification' }) => {
     loadModels();
 
     return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+      isDetectingRef.current = false;
       stopCamera();
     };
   }, []);
@@ -83,6 +89,11 @@ const FaceCapture = ({ onCapture, mode = 'verification' }) => {
 
   // Stop camera
   const stopCamera = () => {
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+    isDetectingRef.current = false;
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
@@ -94,52 +105,69 @@ const FaceCapture = ({ onCapture, mode = 'verification' }) => {
 
   // Face detection loop
   const startFaceDetection = () => {
+    if (isDetectingRef.current) return;
+    isDetectingRef.current = true;
+
     const detectFace = async () => {
-      if (!videoRef.current || !canvasRef.current || !isStreamingRef.current) return;
+      if (!videoRef.current || !canvasRef.current || !isStreamingRef.current) {
+        isDetectingRef.current = false;
+        return;
+      }
       
       const video = videoRef.current;
       const canvas = canvasRef.current;
 
-      // Make sure video is ready
-      if (video.readyState !== 4) {
-        requestAnimationFrame(detectFace);
-        return;
+      try {
+        // Make sure video is ready
+        if (video.readyState !== 4) {
+          animationFrameRef.current = requestAnimationFrame(detectFace);
+          return;
+        }
+
+        // Set canvas dimensions
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Detect face
+        const detections = await faceapi
+          .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
+          .withFaceLandmarks();
+
+        if (!isStreamingRef.current) {
+          isDetectingRef.current = false;
+          return;
+        }
+
+        if (detections.length > 0) {
+          setFaceDetected(true);
+          
+          // Draw detection box
+          const dims = faceapi.matchDimensions(canvas, video, true);
+          const resizedDetections = faceapi.resizeResults(detections, dims);
+          
+          // Draw face box
+          const box = resizedDetections[0].detection.box;
+          ctx.strokeStyle = '#22c55e';
+          ctx.lineWidth = 3;
+          ctx.strokeRect(box.x, box.y, box.width, box.height);
+
+          // Draw landmarks
+          faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
+        } else {
+          setFaceDetected(false);
+        }
+      } catch (err) {
+        console.error('Face detection frame error:', err);
       }
 
-      // Set canvas dimensions
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-
-      const ctx = canvas.getContext('2d');
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // Detect face
-      const detections = await faceapi
-        .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
-        .withFaceLandmarks();
-
-      // console.log('1');  
-
-      if (detections.length > 0) {
-        setFaceDetected(true);
-        
-        // Draw detection box
-        const dims = faceapi.matchDimensions(canvas, video, true);
-        const resizedDetections = faceapi.resizeResults(detections, dims);
-        
-        // Draw face box
-        const box = resizedDetections[0].detection.box;
-        ctx.strokeStyle = '#22c55e';
-        ctx.lineWidth = 3;
-        ctx.strokeRect(box.x, box.y, box.width, box.height);
-
-        // Draw landmarks
-        faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
+      if (isStreamingRef.current) {
+        animationFrameRef.current = requestAnimationFrame(detectFace);
       } else {
-        setFaceDetected(false);
+        isDetectingRef.current = false;
       }
-
-      requestAnimationFrame(detectFace);
     };
 
     detectFace();

@@ -9,7 +9,9 @@
     "dev": "nodemon src/index-attendance.js",
     "start:original": "node src/index.js",
     "dev:original": "nodemon src/index.js",
-    "seed": "node src/scripts/seed.js"
+    "seed": "node src/scripts/seed.js",
+    "test": "node src/scripts/test-thesis-verification.js",
+    "test:thesis": "node src/scripts/test-thesis-verification.js"
   },
   "keywords": [
     "attendance",

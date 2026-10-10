@@ -123,6 +123,12 @@ attendanceSessionSchema.index({ facultyId: 1, isActive: 1 });
 attendanceSessionSchema.index({ sessionToken: 1 }, { unique: true });
 attendanceSessionSchema.index({ isActive: 1, startTime: -1 });
 
+// Ensure only one active session per class at a time
+attendanceSessionSchema.index(
+  { classId: 1, isActive: 1 },
+  { unique: true, partialFilterExpression: { isActive: true } }
+);
+
 // Generate session token
 attendanceSessionSchema.methods.generateSessionToken = function () {
   return crypto.randomBytes(32).toString("hex");
@@ -133,7 +139,7 @@ attendanceSessionSchema.methods.generateQRSecret = function () {
   return crypto.randomBytes(64).toString("hex");
 };
 
-// Generate QR payload with HMAC signature
+// Generate QR payload with HMAC signature (Unix seconds)
 attendanceSessionSchema.methods.generateQRPayload = function () {
   const timestamp = Math.floor(Date.now() / 1000);
   const payload = {
@@ -155,7 +161,7 @@ attendanceSessionSchema.methods.generateQRPayload = function () {
 };
 
 // Verify QR payload
-attendanceSessionSchema.methods.verifyQRPayload = function (payload) {
+attendanceSessionSchema.methods.verifyQRPayload = function (payload, toleranceSeconds = 30) {
   const { sessionId, timestamp, signature } = payload;
   const currentTime = Math.floor(Date.now() / 1000);
 
@@ -164,10 +170,14 @@ attendanceSessionSchema.methods.verifyQRPayload = function (payload) {
     return { valid: false, reason: "Invalid session ID" };
   }
 
-  // Check timestamp (within refresh interval)
-  const timeDiff = Math.abs(currentTime - timestamp);
-  if (timeDiff > this.qrRefreshInterval) {
-    return { valid: false, reason: "QR code expired" };
+  // Reject future timestamps beyond 5 seconds clock skew
+  if (timestamp > currentTime + 5) {
+    return { valid: false, reason: "QR code timestamp cannot be in the future" };
+  }
+
+  // Check timestamp (within expiry tolerance)
+  if (currentTime - timestamp > toleranceSeconds) {
+    return { valid: false, reason: "QR code expired. Please scan again." };
   }
 
   // Verify signature
@@ -178,7 +188,7 @@ attendanceSessionSchema.methods.verifyQRPayload = function (payload) {
     .digest("hex");
 
   if (signature !== expectedSignature) {
-    return { valid: false, reason: "Invalid signature" };
+    return { valid: false, reason: "Invalid QR code signature" };
   }
 
   // Check if session is active

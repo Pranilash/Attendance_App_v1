@@ -16,15 +16,15 @@ const faceEmbeddingSchema = new Schema(
         required: true,
       },
     ],
-    // Reference image stored in Cloudinary
+    // Reference image stored in Cloudinary or local capture
     referenceImage: {
       publicId: {
         type: String,
-        required: true,
+        default: "local_capture",
       },
       url: {
         type: String,
-        required: true,
+        default: "",
       },
     },
     // Additional images for better matching (optional)

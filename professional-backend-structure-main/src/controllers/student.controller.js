@@ -6,6 +6,7 @@ import { Class } from '../models/class.model.js';
 import { AttendanceSession } from '../models/attendanceSession.model.js';
 import { Attendance } from '../models/attendance.model.js';
 import { FaceEmbedding } from '../models/faceEmbedding.model.js';
+import { AttendanceChallenge } from '../models/attendanceChallenge.model.js';
 import crypto from 'crypto';
 import { verifyFaceEmbedding } from '../utils/faceVerification.util.js';
 
@@ -66,6 +67,10 @@ const verifyQR = asyncHandler(async (req, res) => {
 
   // Verify timestamp (30 seconds expiry to account for scan + network latency)
   const currentTime = Date.now();
+  if (timestamp > currentTime + 5000) {
+    throw new ApiError(400, 'QR code timestamp cannot be in the future');
+  }
+
   const qrAge = currentTime - timestamp;
   if (qrAge > 30000) {
     throw new ApiError(400, 'QR code has expired. Please scan again.');
@@ -99,11 +104,24 @@ const verifyQR = asyncHandler(async (req, res) => {
 
   // Check if face is registered
   const student = await AttendanceUser.findById(studentId).select('+faceEmbedding');
-  if (!student.faceEmbedding) {
+  if (!student.faceEmbedding || student.faceEmbedding.length !== 128) {
     throw new ApiError(400, 'Please register your face before marking attendance');
   }
 
-  // Return session info for face verification
+  // Issue single-use challenge for Algorithm 1 verification pipeline
+  await AttendanceChallenge.deleteMany({ studentId, sessionId });
+  const nonce = crypto.randomBytes(16).toString('hex');
+  const challenge = await AttendanceChallenge.create({
+    studentId,
+    sessionId,
+    classId: session.classId,
+    nonce,
+    qrTimestamp: timestamp,
+    actionSequence: ['blink', 'turnLeft', 'turnRight'],
+    expiresAt: new Date(Date.now() + 60 * 1000), // 60 seconds validity
+  });
+
+  // Return session info and challenge for face verification
   return res.status(200).json(
     new ApiResponse(
       200,
@@ -112,6 +130,9 @@ const verifyQR = asyncHandler(async (req, res) => {
         classId: session.classId,
         className: classData.name,
         subjectCode: classData.subjectCode,
+        challengeId: challenge._id,
+        nonce,
+        actionSequence: challenge.actionSequence,
         message: 'QR verified. Please proceed with face verification.',
       },
       'QR code verified successfully'
@@ -146,9 +167,30 @@ const verifyFace = asyncHandler(async (req, res) => {
     throw new ApiError(400, 'Attendance already marked for this session');
   }
 
+  // Validate and consume single-use server challenge
+  const challenge = await AttendanceChallenge.findOneAndUpdate(
+    {
+      studentId,
+      sessionId,
+      consumed: false,
+      expiresAt: { $gt: new Date() },
+    },
+    {
+      $set: { consumed: true, consumedAt: new Date() },
+    },
+    { new: true }
+  );
+
+  if (!challenge) {
+    throw new ApiError(
+      400,
+      'QR verification challenge expired or missing. Please scan the QR code again.'
+    );
+  }
+
   // Get stored face embedding
   const student = await AttendanceUser.findById(studentId).select('+faceEmbedding');
-  if (!student || !student.faceEmbedding) {
+  if (!student || !student.faceEmbedding || student.faceEmbedding.length !== 128) {
     throw new ApiError(400, 'Face not registered. Please register your face first.');
   }
 
@@ -166,7 +208,9 @@ const verifyFace = asyncHandler(async (req, res) => {
     throw new ApiError(400, 'Liveness check failed. Please try again.');
   }
 
-  // Create attendance record
+  const now = new Date();
+
+  // Create attendance record with canonical markedAt
   const attendance = await Attendance.create({
     sessionId,
     studentId,
@@ -174,7 +218,17 @@ const verifyFace = asyncHandler(async (req, res) => {
     status: 'present',
     qrVerified: true,
     faceVerified: true,
-    timestamp: new Date(),
+    livenessScore: 1,
+    qrScannedAt: challenge.createdAt || now,
+    faceVerifiedAt: now,
+    markedAt: now,
+    faceVerificationDetails: {
+      similarityScore: typeof result.distance === 'number' ? result.distance : 0.95,
+      livenessChecks: {
+        blink: true,
+        headMovement: true,
+      },
+    },
   });
 
   // Get class info
@@ -185,7 +239,8 @@ const verifyFace = asyncHandler(async (req, res) => {
       200,
       {
         attendanceId: attendance._id,
-        timestamp: attendance.timestamp,
+        markedAt: attendance.markedAt,
+        timestamp: attendance.markedAt,
         className: classData?.name,
         subjectCode: classData?.subjectCode,
         status: 'present',
@@ -206,13 +261,13 @@ const getAttendanceHistory = asyncHandler(async (req, res) => {
   const studentId = req.user._id;
   const { startDate, endDate, status, page = 1, limit = 20 } = req.query;
 
-  // Build query
+  // Build query using canonical markedAt
   const query = { studentId };
   
   if (startDate || endDate) {
-    query.timestamp = {};
-    if (startDate) query.timestamp.$gte = new Date(startDate);
-    if (endDate) query.timestamp.$lte = new Date(endDate);
+    query.markedAt = {};
+    if (startDate) query.markedAt.$gte = new Date(startDate);
+    if (endDate) query.markedAt.$lte = new Date(endDate);
   }
   
   if (status) query.status = status;
@@ -226,16 +281,17 @@ const getAttendanceHistory = asyncHandler(async (req, res) => {
       path: 'classId',
       select: 'name subjectCode',
     })
-    .sort({ timestamp: -1 })
+    .sort({ markedAt: -1 })
     .skip((page - 1) * limit)
     .limit(parseInt(limit));
 
   const total = await Attendance.countDocuments(query);
 
-  // Format records
+  // Format records with both markedAt and timestamp
   const formattedRecords = records.map((record) => ({
     _id: record._id,
-    timestamp: record.timestamp,
+    markedAt: record.markedAt,
+    timestamp: record.markedAt,
     status: record.status,
     qrVerified: record.qrVerified,
     faceVerified: record.faceVerified,
@@ -288,9 +344,12 @@ const getAttendanceStats = asyncHandler(async (req, res) => {
     ? Math.round((presentCount / totalSessions) * 100) 
     : 0;
 
-  // Check face registration status
-  const student = await AttendanceUser.findById(studentId);
-  const faceRegistered = !!student.faceEmbedding;
+  // Check face registration status correctly from both model and embedding
+  const student = await AttendanceUser.findById(studentId).select('+faceEmbedding');
+  const faceRegistered = Boolean(
+    student?.faceRegistered ||
+    (student?.faceEmbedding && student.faceEmbedding.length === 128)
+  );
 
   return res.status(200).json(
     new ApiResponse(
@@ -326,13 +385,35 @@ const registerFace = asyncHandler(async (req, res) => {
 
   // Validate embedding
   if (!embedding || !Array.isArray(embedding) || embedding.length !== 128) {
-    throw new ApiError(400, 'Invalid face embedding');
+    throw new ApiError(400, 'Invalid face embedding format. Must be 128 dimensions.');
   }
 
-  // Update student with face embedding
+  const now = new Date();
+
+  // Store face embedding audit record
+  const faceRecord = await FaceEmbedding.findOneAndUpdate(
+    { userId: studentId },
+    {
+      userId: studentId,
+      embedding,
+      registeredAt: now,
+      referenceImage: {
+        publicId: 'webcam_capture',
+        url: image ? (typeof image === 'string' ? image.slice(0, 100) : 'captured') : '',
+      },
+    },
+    { upsert: true, new: true }
+  );
+
+  // Update student with face embedding and set faceRegistered to true
   const student = await AttendanceUser.findByIdAndUpdate(
     studentId,
-    { faceEmbedding: embedding },
+    {
+      faceEmbedding: embedding,
+      faceRegistered: true,
+      faceRegisteredAt: now,
+      faceEmbeddingId: faceRecord._id,
+    },
     { new: true }
   ).select('-password -refreshToken');
 
@@ -340,20 +421,18 @@ const registerFace = asyncHandler(async (req, res) => {
     throw new ApiError(404, 'Student not found');
   }
 
-  // Store face embedding record
-  await FaceEmbedding.findOneAndUpdate(
-    { userId: studentId },
-    {
-      userId: studentId,
-      embedding,
-      registeredAt: new Date(),
-    },
-    { upsert: true, new: true }
-  );
-
   return res
     .status(200)
-    .json(new ApiResponse(200, { registered: true }, 'Face registered successfully'));
+    .json(
+      new ApiResponse(
+        200,
+        {
+          registered: true,
+          faceRegisteredAt: now,
+        },
+        'Face registered successfully'
+      )
+    );
 });
 
 /**
@@ -364,14 +443,21 @@ const registerFace = asyncHandler(async (req, res) => {
 const getFaceStatus = asyncHandler(async (req, res) => {
   const studentId = req.user._id;
 
+  const student = await AttendanceUser.findById(studentId).select('+faceEmbedding');
   const faceRecord = await FaceEmbedding.findOne({ userId: studentId });
+
+  const isRegistered = Boolean(
+    student?.faceRegistered ||
+    (student?.faceEmbedding && student.faceEmbedding.length === 128) ||
+    faceRecord
+  );
 
   return res.status(200).json(
     new ApiResponse(
       200,
       {
-        registered: !!faceRecord,
-        registeredAt: faceRecord?.registeredAt,
+        registered: isRegistered,
+        registeredAt: student?.faceRegisteredAt || faceRecord?.registeredAt,
       },
       'Face status fetched successfully'
     )

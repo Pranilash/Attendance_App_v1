@@ -1,4 +1,5 @@
 import { Outlet } from 'react-router-dom';
+import InstallPwaButton from '../common/InstallPwaButton';
 
 const AuthLayout = () => {
   return (
@@ -27,6 +28,9 @@ const AuthLayout = () => {
         <p className="mt-2 text-center text-sm text-gray-400">
           Secure QR & Face Verification
         </p>
+        <div className="mt-3 flex justify-center">
+          <InstallPwaButton />
+        </div>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">

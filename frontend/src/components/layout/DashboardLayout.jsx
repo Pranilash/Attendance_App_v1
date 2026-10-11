@@ -20,6 +20,7 @@ import {
   Camera,
   UserCircle,
 } from 'lucide-react';
+import InstallPwaButton from '../common/InstallPwaButton';
 
 const DashboardLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -185,7 +186,9 @@ const DashboardLayout = () => {
             </div>
 
             {/* Right side actions */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
+              <InstallPwaButton />
+
               {/* User menu */}
               <div className="relative">
                 <button

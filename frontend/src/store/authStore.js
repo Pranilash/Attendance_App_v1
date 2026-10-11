@@ -30,6 +30,11 @@ const useAuthStore = create(
 
       // Logout
       logout: () => {
+        try {
+          localStorage.removeItem('auth-storage');
+        } catch (e) {
+          // ignore localStorage access error
+        }
         set({
           user: null,
           accessToken: null,

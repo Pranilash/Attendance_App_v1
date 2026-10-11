@@ -51,6 +51,20 @@ app.get("/api/departments", async (req, res) => {
   }
 });
 
+// API Root - version indicator
+app.get("/api/v1", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "API v1",
+    endpoints: {
+      auth: "/api/auth",
+      admin: "/api/admin",
+      faculty: "/api/faculty",
+      student: "/api/student",
+    },
+  });
+});
+
 // API Routes
 import authRoutes from "./routes/auth.routes.js";
 import adminRoutes from "./routes/admin.routes.js";

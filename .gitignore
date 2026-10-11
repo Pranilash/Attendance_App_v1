@@ -1,2 +1,11 @@
 /AGENTS.md
+node_modules/
 /frontend/node_modules/
+/professional-backend-structure-main/node_modules/
+dist/
+/frontend/dist/
+scratch/
+.env
+.env.*
+!.env.example
+.DS_Store

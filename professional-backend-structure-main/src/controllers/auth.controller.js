@@ -185,7 +185,6 @@ const login = asyncHandler(async (req, res) => {
         {
           user: loggedInUser,
           accessToken,
-          refreshToken,
         },
         "Login successful"
       )
@@ -268,7 +267,6 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
           200,
           {
             accessToken,
-            refreshToken: newRefreshToken,
           },
           "Token refreshed successfully"
         )

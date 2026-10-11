@@ -26,7 +26,7 @@ const departmentSchema = new Schema(
     },
     head: {
       type: Schema.Types.ObjectId,
-      ref: "User",
+      ref: "AttendanceUser",
     },
     isActive: {
       type: Boolean,

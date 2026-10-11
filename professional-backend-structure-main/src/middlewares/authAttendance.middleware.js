@@ -105,6 +105,11 @@ export const verifyRefreshToken = asyncHandler(async (req, res, next) => {
       throw new ApiError(401, "Invalid refresh token. User not found.");
     }
 
+    // Check if user is active
+    if (!user.isActive) {
+      throw new ApiError(403, "Your account has been deactivated. Please contact administrator.");
+    }
+
     // Verify that the refresh token matches the one stored in database
     if (user.refreshToken !== incomingRefreshToken) {
       throw new ApiError(401, "Refresh token is invalid or has been revoked.");

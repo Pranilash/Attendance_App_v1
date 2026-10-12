@@ -26,6 +26,18 @@ const attendanceSchema = new Schema(
       type: Boolean,
       default: false,
     },
+    bleVerified: {
+      type: Boolean,
+      default: false,
+    },
+    bleRssi: {
+      type: Number,
+      default: null,
+    },
+    bleDetectedAt: {
+      type: Date,
+      default: null,
+    },
     livenessScore: {
       type: Number,
       min: [0, "Liveness score must be between 0 and 1"],

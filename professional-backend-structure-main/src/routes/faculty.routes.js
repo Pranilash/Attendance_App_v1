@@ -16,6 +16,10 @@ import {
   getClassReport,
   getSessionReport,
   exportClassCSV,
+  getClassDebarmentWatchlist,
+  getFacultyTimetable,
+  createTimetableSlot,
+  deleteTimetableSlot,
 } from '../controllers/faculty.controller.js';
 import { verifyJWT } from '../middlewares/authAttendance.middleware.js';
 import { requireRoles } from '../middlewares/rbac.middleware.js';
@@ -52,5 +56,13 @@ router.route('/session/history/:classId').get(getSessionHistory);
 router.route('/report/class/:classId').get(getClassReport);
 router.route('/report/class/:classId/csv').get(exportClassCSV);
 router.route('/report/session/:sessionId').get(getSessionReport);
+
+// Debarment Watchlist (VII Sem Upgrade 4)
+router.route('/class/:id/debarment-watchlist').get(getClassDebarmentWatchlist);
+router.route('/classes/:id/debarment-watchlist').get(getClassDebarmentWatchlist);
+
+// Timetable Engine (VII Sem Upgrade 5)
+router.route('/timetable').get(getFacultyTimetable).post(createTimetableSlot);
+router.route('/timetable/:id').delete(deleteTimetableSlot);
 
 export default router;

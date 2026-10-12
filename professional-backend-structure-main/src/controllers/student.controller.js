@@ -7,10 +7,11 @@ import { AttendanceSession } from '../models/attendanceSession.model.js';
 import { Attendance } from '../models/attendance.model.js';
 import { FaceEmbedding } from '../models/faceEmbedding.model.js';
 import { AttendanceChallenge } from '../models/attendanceChallenge.model.js';
+import { TimetableSchedule } from '../models/timetableSchedule.model.js';
 import crypto from 'crypto';
 import { verifyFaceEmbedding } from '../utils/faceVerification.util.js';
 
-// ==================== CLASS VIEWS ====================
+// Class views
 
 /**
  * Get student's classes
@@ -33,7 +34,7 @@ const getClasses = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, classes, 'Classes fetched successfully'));
 });
 
-// ==================== QR VERIFICATION ====================
+// QR code verification
 
 /**
  * Verify QR code
@@ -41,7 +42,7 @@ const getClasses = asyncHandler(async (req, res) => {
  * @access Student only
  */
 const verifyQR = asyncHandler(async (req, res) => {
-  const { qrPayload } = req.body;
+  const { qrPayload, bleProof } = req.body;
   const studentId = req.user._id;
 
   // Parse QR payload
@@ -55,8 +56,9 @@ const verifyQR = asyncHandler(async (req, res) => {
     throw new ApiError(400, 'Invalid QR code format');
   }
 
-  // Find session - must select qrSecret explicitly since it has select: false
-  const session = await AttendanceSession.findById(sessionId).select('+qrSecret');
+  // Find session - must select qrSecret and bleBeaconSecret explicitly since they have select: false
+  const session = await AttendanceSession.findById(sessionId)
+    .select('+qrSecret +bleBeaconSecret');
   if (!session) {
     throw new ApiError(404, 'Session not found');
   }
@@ -86,6 +88,26 @@ const verifyQR = asyncHandler(async (req, res) => {
     throw new ApiError(400, 'Invalid QR code signature');
   }
 
+  // BLE Proximity Verification (VII Sem Upgrade 2)
+  let bleVerified = false;
+  let detectedRssi = null;
+  if (session.bleEnabled) {
+    if (!bleProof || !bleProof.beaconToken) {
+      throw new ApiError(403, 'Classroom BLE proximity verification required. Please enable Bluetooth.');
+    }
+    if (bleProof.beaconToken !== session.bleBeaconToken) {
+      throw new ApiError(403, 'Invalid classroom beacon token. Proximity check failed.');
+    }
+    if (typeof bleProof.rssi === 'number') {
+      detectedRssi = bleProof.rssi;
+      const threshold = session.bleRssiThreshold || -75;
+      if (bleProof.rssi < threshold) {
+        throw new ApiError(403, `BLE RSSI signal too weak (${bleProof.rssi} dBm < ${threshold} dBm). You appear to be outside the classroom.`);
+      }
+    }
+    bleVerified = true;
+  }
+
   // Check if student is enrolled in the class
   const classData = await Class.findById(session.classId);
   if (!classData || !classData.students.includes(studentId)) {
@@ -108,6 +130,11 @@ const verifyQR = asyncHandler(async (req, res) => {
     throw new ApiError(400, 'Please register your face before marking attendance');
   }
 
+  // Dynamic randomized action sequence for active liveness challenge (VII Sem Upgrade 3)
+  const candidateActions = ['blink', 'turnLeft', 'turnRight', 'smile'];
+  const shuffledActions = [...candidateActions].sort(() => 0.5 - Math.random()).slice(0, 2);
+  const actionSequence = shuffledActions.length >= 2 ? shuffledActions : ['blink', 'turnLeft'];
+
   // Issue single-use challenge for Algorithm 1 verification pipeline
   await AttendanceChallenge.deleteMany({ studentId, sessionId });
   const nonce = crypto.randomBytes(16).toString('hex');
@@ -117,7 +144,9 @@ const verifyQR = asyncHandler(async (req, res) => {
     classId: session.classId,
     nonce,
     qrTimestamp: timestamp,
-    actionSequence: ['blink', 'turnLeft', 'turnRight'],
+    actionSequence,
+    bleVerified,
+    bleRssi: detectedRssi,
     expiresAt: new Date(Date.now() + 60 * 1000), // 60 seconds validity
   });
 
@@ -133,6 +162,7 @@ const verifyQR = asyncHandler(async (req, res) => {
         challengeId: challenge._id,
         nonce,
         actionSequence: challenge.actionSequence,
+        bleVerified,
         message: 'QR verified. Please proceed with face verification.',
       },
       'QR code verified successfully'
@@ -140,7 +170,7 @@ const verifyQR = asyncHandler(async (req, res) => {
   );
 });
 
-// ==================== FACE VERIFICATION ====================
+// Facial verification
 
 /**
  * Verify face and mark attendance
@@ -148,7 +178,7 @@ const verifyQR = asyncHandler(async (req, res) => {
  * @access Student only
  */
 const verifyFace = asyncHandler(async (req, res) => {
-  const { sessionId, embedding, image, livenessPassed } = req.body;
+  const { sessionId, embedding, image, livenessPassed, livenessMetrics } = req.body;
   const studentId = req.user._id;
 
   // Validate session - must select qrSecret explicitly since it has select: false
@@ -193,8 +223,28 @@ const verifyFace = asyncHandler(async (req, res) => {
     throw new ApiError(400, 'Face verification failed. Face does not match.');
   }
 
-  // Check liveness
-  if (!livenessPassed) {
+  // Dynamic Server-Verified Liveness Protocol (VII Sem Upgrade 3)
+  if (livenessMetrics) {
+    const { earDelta, yawDelta, durationMs } = livenessMetrics;
+    if (typeof durationMs === 'number' && (durationMs < 800 || durationMs > 25000)) {
+      throw new ApiError(400, 'Liveness timing out of bounds. Please follow the on-screen prompts.');
+    }
+    if (
+      challenge.actionSequence?.includes('blink') &&
+      typeof earDelta === 'number' &&
+      earDelta < 0.03
+    ) {
+      throw new ApiError(400, 'Liveness check failed: Eye blink not detected with sufficient fidelity.');
+    }
+    if (
+      (challenge.actionSequence?.includes('turnLeft') ||
+        challenge.actionSequence?.includes('turnRight')) &&
+      typeof yawDelta === 'number' &&
+      Math.abs(yawDelta) < 8
+    ) {
+      throw new ApiError(400, 'Liveness check failed: Head rotation not detected.');
+    }
+  } else if (!livenessPassed) {
     throw new ApiError(400, 'Liveness check failed. Please try again.');
   }
 
@@ -208,6 +258,9 @@ const verifyFace = asyncHandler(async (req, res) => {
       status: 'present',
       qrVerified: true,
       faceVerified: true,
+      bleVerified: Boolean(challenge.bleVerified),
+      bleRssi: challenge.bleRssi || null,
+      bleDetectedAt: challenge.bleVerified ? (challenge.createdAt || new Date()) : null,
       livenessScore: 1,
       qrScannedAt: challenge.createdAt || new Date(),
       faceVerifiedAt: new Date(),
@@ -215,8 +268,10 @@ const verifyFace = asyncHandler(async (req, res) => {
       faceVerificationDetails: {
         similarityScore: typeof result.distance === 'number' ? result.distance : 0.95,
         livenessChecks: {
-          blink: true,
-          headMovement: true,
+          blink: challenge.actionSequence?.includes('blink') ?? true,
+          headMovement:
+            challenge.actionSequence?.some((a) => a.startsWith('turn')) ?? true,
+          smile: challenge.actionSequence?.includes('smile') ?? false,
         },
       },
     });
@@ -246,7 +301,7 @@ const verifyFace = asyncHandler(async (req, res) => {
   );
 });
 
-// ==================== ATTENDANCE HISTORY ====================
+// Attendance history and analytics
 
 /**
  * Get attendance history
@@ -340,6 +395,76 @@ const getAttendanceStats = asyncHandler(async (req, res) => {
     ? Math.round((presentCount / totalSessions) * 100) 
     : 0;
 
+  // Calculate Debarment Risk Index (DRI) across classes (VII Sem Upgrade 4)
+  const classBreakdown = await Promise.all(
+    classes.map(async (cls) => {
+      const totalPlanned = cls.totalPlannedSessions || 40;
+      const classSessions = await AttendanceSession.find({ classId: cls._id });
+      const conducted = classSessions.length;
+      const sessionIds = classSessions.map((s) => s._id);
+      const attended = await Attendance.countDocuments({
+        sessionId: { $in: sessionIds },
+        studentId,
+        status: 'present',
+      });
+
+      const remaining = Math.max(0, totalPlanned - conducted);
+      const currentRate = conducted > 0 ? Math.round((attended / conducted) * 100) : 100;
+      const maxAchievableRate = Math.min(
+        100,
+        Math.round(((attended + remaining) / totalPlanned) * 100)
+      );
+      const requiredSessions = Math.max(0, Math.ceil(0.75 * totalPlanned) - attended);
+
+      let dri = 0;
+      let riskLevel = 'SAFE';
+
+      if (maxAchievableRate < 75) {
+        dri = 100;
+        riskLevel = 'DEBARRED';
+      } else if (remaining > 0) {
+        dri = Math.min(100, Math.max(0, Math.round((requiredSessions / remaining) * 100)));
+        if (dri >= 80) riskLevel = 'CRITICAL';
+        else if (dri >= 50) riskLevel = 'WARNING';
+        else riskLevel = 'SAFE';
+      } else {
+        dri = 0;
+        riskLevel = currentRate >= 75 ? 'SAFE' : 'DEBARRED';
+      }
+
+      return {
+        classId: cls._id,
+        className: cls.name,
+        subjectCode: cls.subjectCode,
+        totalPlanned,
+        conducted,
+        attended,
+        remaining,
+        currentRate,
+        maxAchievableRate,
+        requiredSessions,
+        dri,
+        riskLevel,
+      };
+    })
+  );
+
+  let overallDri = 0;
+  let overallRiskLevel = 'SAFE';
+  if (classBreakdown.length > 0) {
+    const severities = { DEBARRED: 4, CRITICAL: 3, WARNING: 2, SAFE: 1 };
+    let highestSeverity = 1;
+    for (const c of classBreakdown) {
+      if (severities[c.riskLevel] > highestSeverity) {
+        highestSeverity = severities[c.riskLevel];
+        overallRiskLevel = c.riskLevel;
+      }
+      if (c.dri > overallDri) {
+        overallDri = c.dri;
+      }
+    }
+  }
+
   // Check face registration status correctly from both model and embedding
   const student = await AttendanceUser.findById(studentId).select('+faceEmbedding');
   const faceRegistered = Boolean(
@@ -357,13 +482,44 @@ const getAttendanceStats = asyncHandler(async (req, res) => {
         absentCount,
         attendanceRate,
         faceRegistered,
+        debarmentRisk: {
+          dri: overallDri,
+          riskLevel: overallRiskLevel,
+          classes: classBreakdown,
+        },
       },
       'Attendance stats fetched successfully'
     )
   );
 });
 
-// ==================== FACE REGISTRATION ====================
+// Timetable engine
+
+/**
+ * Get student weekly timetable
+ * @route GET /api/student/timetable
+ * @access Student only
+ */
+const getStudentTimetable = asyncHandler(async (req, res) => {
+  const studentId = req.user._id;
+
+  const classes = await Class.find({ students: studentId, isActive: true });
+  const classIds = classes.map((c) => c._id);
+
+  const timetable = await TimetableSchedule.find({
+    classId: { $in: classIds },
+    isActive: true,
+  })
+    .populate('classId', 'name subjectCode room')
+    .populate('facultyId', 'name email')
+    .sort({ dayOfWeek: 1, startTime: 1 });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, timetable, 'Student timetable fetched successfully'));
+});
+
+// Face registration
 
 /**
  * Register face
@@ -468,4 +624,5 @@ export {
   getAttendanceStats,
   registerFace,
   getFaceStatus,
+  getStudentTimetable,
 };

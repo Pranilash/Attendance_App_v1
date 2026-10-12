@@ -147,9 +147,6 @@ const attendanceUserSchema = new Schema(
 );
 
 // Indexes
-attendanceUserSchema.index({ email: 1 });
-attendanceUserSchema.index({ enrollmentNumber: 1 }, { sparse: true });
-attendanceUserSchema.index({ employeeId: 1 }, { sparse: true });
 attendanceUserSchema.index({ department: 1, role: 1 });
 attendanceUserSchema.index({ isActive: 1 });
 

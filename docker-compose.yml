@@ -13,20 +13,22 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=8000
-      - MONGODB_URI=${MONGODB_URI}
-      - ACCESS_TOKEN_SECRET=${ACCESS_TOKEN_SECRET}
-      - REFRESH_TOKEN_SECRET=${REFRESH_TOKEN_SECRET}
+      - MONGODB_URI=${MONGODB_URI:-mongodb://mongodb:27017/attendance}
+      - ACCESS_TOKEN_SECRET=${ACCESS_TOKEN_SECRET:-attendance_super_secret_access_jwt_key_2026}
+      - REFRESH_TOKEN_SECRET=${REFRESH_TOKEN_SECRET:-attendance_super_secret_refresh_jwt_key_2026}
       - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:5173}
       - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
       - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
       - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
-      - REDIS_URL=${REDIS_URL}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:8000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
+    depends_on:
+      - mongodb
     networks:
       - attendance-network
 
@@ -41,6 +43,18 @@ services:
       - "5173:80"
     depends_on:
       - backend
+    networks:
+      - attendance-network
+
+  # MongoDB Database Service (for 100% self-contained local or VPS deployment)
+  mongodb:
+    image: mongo:6-jammy
+    container_name: attendance-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb-data:/data/db
     networks:
       - attendance-network
 
@@ -79,3 +93,4 @@ networks:
 
 volumes:
   redis-data:
+  mongodb-data:

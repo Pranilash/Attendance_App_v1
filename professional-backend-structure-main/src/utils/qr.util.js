@@ -2,13 +2,10 @@ import crypto from "crypto";
 import QRCode from "qrcode";
 
 /**
- * QR Code Generation and Verification Utility
- * 
- * This utility handles the creation and verification of HMAC-signed QR codes
- * for secure attendance marking with anti-replay protection.
+ * Generates and validates HMAC-signed QR codes for attendance sessions.
  */
 
-// Configuration
+// Configuration constants
 const QR_REFRESH_INTERVAL = parseInt(process.env.QR_REFRESH_INTERVAL) || 15; // seconds
 const QR_SECRET_SALT = process.env.QR_SECRET_SALT || "default-qr-salt-change-in-production";
 
@@ -49,7 +46,7 @@ export const generateQRPayload = (sessionId, qrSecret, timestamp = null) => {
     timestamp: ts,
   };
 
-  // Create HMAC signature
+  // Calculate HMAC-SHA256 signature
   const dataToSign = payload.sessionId + ":" + payload.timestamp;
   const signature = crypto
     .createHmac("sha256", qrSecret)
@@ -71,7 +68,7 @@ export const generateQRPayload = (sessionId, qrSecret, timestamp = null) => {
 export const generateQRCode = async (sessionId, qrSecret) => {
   const payload = generateQRPayload(sessionId, qrSecret);
   
-  // Generate QR code as data URL
+  // Render QR code image as data URL
   const qrDataUrl = await QRCode.toDataURL(JSON.stringify(payload), {
     width: 400,
     margin: 2,
@@ -82,7 +79,7 @@ export const generateQRCode = async (sessionId, qrSecret) => {
     errorCorrectionLevel: "M",
   });
 
-  // Calculate expiry time
+  // Calculate token expiration timestamp
   const expiresAt = new Date((payload.timestamp + QR_REFRESH_INTERVAL) * 1000);
 
   return {
@@ -104,7 +101,7 @@ export const generateQRCodeSequence = async (sessionId, qrSecret) => {
   
   const currentQR = await generateQRCode(sessionId, qrSecret);
   
-  // Pre-generate next QR code (for smooth transition)
+  // Generate subsequent QR code for client pre-fetching
   const nextTimestamp = currentTimestamp + QR_REFRESH_INTERVAL;
   const nextPayload = generateQRPayload(sessionId, qrSecret, nextTimestamp);
   const nextQRDataUrl = await QRCode.toDataURL(JSON.stringify(nextPayload), {
@@ -139,7 +136,7 @@ export const verifyQRPayload = (payload, qrSecret, refreshInterval = QR_REFRESH_
   const { sessionId, timestamp, signature } = payload;
   const currentTime = Math.floor(Date.now() / 1000);
 
-  // Check if all required fields are present
+  // Validate presence of required payload fields
   if (!sessionId || !timestamp || !signature) {
     return {
       valid: false,
@@ -147,7 +144,7 @@ export const verifyQRPayload = (payload, qrSecret, refreshInterval = QR_REFRESH_
     };
   }
 
-  // Check timestamp type
+  // Validate timestamp format
   if (typeof timestamp !== "number" || timestamp <= 0) {
     return {
       valid: false,
@@ -155,7 +152,7 @@ export const verifyQRPayload = (payload, qrSecret, refreshInterval = QR_REFRESH_
     };
   }
 
-  // Check timestamp (within refresh interval)
+  // Verify timestamp stays within the refresh window
   const timeDiff = Math.abs(currentTime - timestamp);
   if (timeDiff > refreshInterval) {
     return {
@@ -166,7 +163,7 @@ export const verifyQRPayload = (payload, qrSecret, refreshInterval = QR_REFRESH_
     };
   }
 
-  // Verify signature
+  // Verify HMAC-SHA256 signature against session secret
   const dataToSign = sessionId + ":" + timestamp;
   const expectedSignature = crypto
     .createHmac("sha256", qrSecret)

@@ -1,11 +1,9 @@
 /**
- * Face Verification Utility
- * 
- * This utility handles face embedding comparison using cosine similarity
- * and provides helper functions for face verification workflows.
+ * Face verification utility.
+ * Compares face embedding vectors with cosine similarity and evaluates liveness.
  */
 
-// Default similarity threshold (can be overridden via environment variable)
+// Set default cosine similarity threshold.
 const DEFAULT_SIMILARITY_THRESHOLD = parseFloat(process.env.FACE_SIMILARITY_THRESHOLD) || 0.6;
 const LIVENESS_CONFIDENCE_THRESHOLD = parseFloat(process.env.LIVENESS_CONFIDENCE_THRESHOLD) || 0.8;
 
@@ -84,7 +82,7 @@ export const verifyFaceEmbedding = (queryEmbedding, storedEmbedding, threshold =
 
   return {
     isMatch: similarity >= threshold,
-    similarity: Math.round(similarity * 1000) / 1000, // Round to 3 decimal places
+    similarity: Math.round(similarity * 1000) / 1000, // Round score to 3 decimal places
     distance: Math.round(distance * 1000) / 1000,
     threshold,
     confidence: getConfidenceLevel(similarity),
@@ -131,7 +129,7 @@ export const findBestMatch = (queryEmbedding, storedEmbeddings, threshold = DEFA
       };
     }
 
-    // Check additional embeddings if available
+    // Check additional registered face embeddings
     if (record.additionalImages && record.additionalImages.length > 0) {
       for (const additional of record.additionalImages) {
         if (additional.embedding) {
@@ -198,7 +196,7 @@ export const validateLiveness = (livenessChecks, livenessScore = null) => {
     },
     score: livenessScore,
     passedCount: 0,
-    requiredChecks: 2, // Minimum required checks to pass
+    requiredChecks: 2, // Minimum passing checks required
   };
 
   if (livenessChecks) {
@@ -213,13 +211,13 @@ export const validateLiveness = (livenessChecks, livenessScore = null) => {
     result.checks.smile,
   ].filter(Boolean).length;
 
-  // Check if minimum required checks passed
+  // Verify that minimum check count passes
   if (result.passedCount < result.requiredChecks) {
     result.valid = false;
     result.reason = "Insufficient liveness checks passed. Required: " + result.requiredChecks + ", Passed: " + result.passedCount;
   }
 
-  // Check overall liveness score if provided
+  // Validate confidence score threshold when provided
   if (livenessScore !== null && livenessScore < LIVENESS_CONFIDENCE_THRESHOLD) {
     result.valid = false;
     result.reason = "Liveness confidence too low. Required: " + LIVENESS_CONFIDENCE_THRESHOLD + ", Got: " + livenessScore;

@@ -7,7 +7,7 @@ import { Class } from '../models/class.model.js';
 import { Attendance } from '../models/attendance.model.js';
 import { AttendanceSession } from '../models/attendanceSession.model.js';
 
-// ==================== DEPARTMENT MANAGEMENT ====================
+// Department management
 
 /**
  * Create a new department
@@ -105,7 +105,7 @@ const deleteDepartment = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, 'Department deleted successfully'));
 });
 
-// ==================== FACULTY MANAGEMENT ====================
+// Faculty management
 
 /**
  * Get all faculty
@@ -225,7 +225,7 @@ const deleteFaculty = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, 'Faculty deleted successfully'));
 });
 
-// ==================== STUDENT MANAGEMENT ====================
+// Student management
 
 /**
  * Get all students
@@ -374,7 +374,7 @@ const deleteStudent = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, 'Student deleted successfully'));
 });
 
-// ==================== DASHBOARD STATS ====================
+// Dashboard statistics
 
 /**
  * Get admin dashboard stats

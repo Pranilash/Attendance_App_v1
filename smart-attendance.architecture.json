@@ -1,0 +1,252 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Smart Attendance System Architecture",
+    "subtitle": "Microservices, Multi-Factor Verification & Cloud Infrastructure",
+    "output": "smart-attendance-architecture.html",
+    "quality_profile": "showcase"
+  },
+  "components": [
+    {
+      "id": "client_student",
+      "type": "frontend",
+      "label": "Student PWA",
+      "sublabel": "React 18 + Vite",
+      "tag": "BLE + Face-API",
+      "pos": [40, 110],
+      "size": [140, 64]
+    },
+    {
+      "id": "client_faculty",
+      "type": "frontend",
+      "label": "Faculty Portal",
+      "sublabel": "React + Tailwind",
+      "tag": "Live QR Session",
+      "pos": [40, 240],
+      "size": [140, 64]
+    },
+    {
+      "id": "client_admin",
+      "type": "frontend",
+      "label": "Admin Console",
+      "sublabel": "System Analytics",
+      "tag": "RBAC + Reports",
+      "pos": [40, 370],
+      "size": [140, 64]
+    },
+    {
+      "id": "nginx_proxy",
+      "type": "security",
+      "label": "Nginx Gateway",
+      "sublabel": "Reverse Proxy :80",
+      "tag": "TLS + Load Guard",
+      "pos": [270, 240],
+      "size": [140, 64]
+    },
+    {
+      "id": "sec_guard",
+      "type": "security",
+      "label": "Security Guard",
+      "sublabel": "Helmet + Zod",
+      "tag": "HMAC Verification",
+      "pos": [270, 110],
+      "size": [140, 64]
+    },
+    {
+      "id": "api_core",
+      "type": "backend",
+      "label": "Attendance API",
+      "sublabel": "Express REST :8000",
+      "tag": "JWT + RBAC Guards",
+      "pos": [500, 240],
+      "size": [150, 64]
+    },
+    {
+      "id": "verify_engine",
+      "type": "backend",
+      "label": "Verification Core",
+      "sublabel": "Algorithm 1 Engine",
+      "tag": "Cosine ≥ 0.60 + EAR",
+      "pos": [500, 110],
+      "size": [150, 64]
+    },
+    {
+      "id": "analytics_engine",
+      "type": "backend",
+      "label": "DRI & Timetable",
+      "sublabel": "Debarment Analytics",
+      "tag": "Risk Index Watchlist",
+      "pos": [500, 370],
+      "size": [150, 64]
+    },
+    {
+      "id": "redis_cache",
+      "type": "database",
+      "label": "Upstash Redis",
+      "sublabel": "In-Memory :6379",
+      "tag": "15s QR Tokens & TTL",
+      "pos": [760, 110],
+      "size": [150, 64]
+    },
+    {
+      "id": "mongo_db",
+      "type": "database",
+      "label": "MongoDB Atlas",
+      "sublabel": "Primary Store M0",
+      "tag": "Users, Classes & Logs",
+      "pos": [760, 240],
+      "size": [150, 64]
+    },
+    {
+      "id": "cloudinary_cdn",
+      "type": "cloud",
+      "label": "Cloudinary CDN",
+      "sublabel": "Encrypted Cloud",
+      "tag": "Biometric Photo Store",
+      "pos": [760, 370],
+      "size": [150, 64]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Application & Security Perimeter",
+      "wraps": [
+        "nginx_proxy",
+        "sec_guard",
+        "api_core",
+        "verify_engine",
+        "analytics_engine"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Cloud Data Tier",
+      "wraps": [
+        "redis_cache",
+        "mongo_db",
+        "cloudinary_cdn"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "student-to-nginx",
+      "from": "client_student",
+      "to": "nginx_proxy",
+      "label": "HTTPS",
+      "variant": "emphasis"
+    },
+    {
+      "id": "faculty-to-nginx",
+      "from": "client_faculty",
+      "to": "nginx_proxy",
+      "fromSide": "right",
+      "toSide": "left",
+      "label": "HTTPS"
+    },
+    {
+      "id": "admin-to-nginx",
+      "from": "client_admin",
+      "to": "nginx_proxy",
+      "label": "HTTPS"
+    },
+    {
+      "id": "nginx-to-guard",
+      "from": "nginx_proxy",
+      "to": "sec_guard",
+      "label": "sanitize",
+      "variant": "security",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "nginx-to-core",
+      "from": "nginx_proxy",
+      "to": "api_core",
+      "fromSide": "right",
+      "toSide": "left",
+      "label": "proxy :8000"
+    },
+    {
+      "id": "core-to-verify",
+      "from": "api_core",
+      "to": "verify_engine",
+      "label": "validate",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "core-to-analytics",
+      "from": "api_core",
+      "to": "analytics_engine",
+      "label": "compute",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "verify-to-redis",
+      "from": "verify_engine",
+      "to": "redis_cache",
+      "fromSide": "right",
+      "toSide": "left",
+      "label": "verify token"
+    },
+    {
+      "id": "core-to-mongo",
+      "from": "api_core",
+      "to": "mongo_db",
+      "fromSide": "right",
+      "toSide": "left",
+      "label": "Mongoose ODM"
+    },
+    {
+      "id": "analytics-to-cloudinary",
+      "from": "analytics_engine",
+      "to": "cloudinary_cdn",
+      "fromSide": "right",
+      "toSide": "left",
+      "label": "biometric sync",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Client Tier",
+      "items": [
+        "Student PWA with offline model weight caching",
+        "Web Bluetooth RSSI proximity check",
+        "Faculty rotating QR display with 14s auto-refresh"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Edge & Security",
+      "items": [
+        "Nginx reverse proxy with CORS & Helmet headers",
+        "HMAC-SHA256 signature verification on QR tokens",
+        "Zod payload sanitization & express-rate-limit"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Application Core",
+      "items": [
+        "Algorithm 1 multi-factor verification pipeline",
+        "128-dim face embedding cosine similarity >= 0.60",
+        "Predictive Debarment Risk Index (DRI) calculation"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Cloud Data Tier",
+      "items": [
+        "MongoDB Atlas M0 database for persistence",
+        "Upstash serverless Redis for ephemeral session tokens",
+        "Cloudinary cloud store for registered student faces"
+      ]
+    }
+  ]
+}

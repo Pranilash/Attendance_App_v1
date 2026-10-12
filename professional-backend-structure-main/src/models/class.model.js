@@ -93,6 +93,11 @@ const classSchema = new Schema(
       min: [1, "Credits must be at least 1"],
       max: [6, "Credits cannot exceed 6"],
     },
+    totalPlannedSessions: {
+      type: Number,
+      default: 40,
+      min: [1, "Total planned sessions must be at least 1"],
+    },
     isActive: {
       type: Boolean,
       default: true,

@@ -34,6 +34,7 @@ const StudentDashboard = () => {
     absentCount: 0,
     attendanceRate: 0,
     faceRegistered: false,
+    debarmentRisk: null,
   });
   const [upcomingClasses, setUpcomingClasses] = useState([]);
   const [recentAttendance, setRecentAttendance] = useState([]);
@@ -60,6 +61,7 @@ const StudentDashboard = () => {
           absentCount: statsRes.data.data.absentCount || 0,
           attendanceRate: statsRes.data.data.attendanceRate || 0,
           faceRegistered: statsRes.data.data.faceRegistered || false,
+          debarmentRisk: statsRes.data.data.debarmentRisk || null,
         });
       }
     } catch (error) {
@@ -133,6 +135,75 @@ const StudentDashboard = () => {
           color="bg-blue-500"
         />
       </div>
+
+      {/* Debarment Risk Radar (VII Sem Upgrade 4) */}
+      {stats.debarmentRisk && (
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 pb-4 border-b border-gray-100">
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-semibold text-gray-900">Debarment Risk Radar (DRI)</h2>
+                <span
+                  className={`text-xs px-2.5 py-0.5 rounded-full font-semibold ${
+                    stats.debarmentRisk.riskLevel === 'SAFE'
+                      ? 'bg-green-100 text-green-800'
+                      : stats.debarmentRisk.riskLevel === 'WARNING'
+                      ? 'bg-yellow-100 text-yellow-800'
+                      : 'bg-red-100 text-red-800'
+                  }`}
+                >
+                  {stats.debarmentRisk.riskLevel}
+                </span>
+              </div>
+              <p className="text-sm text-gray-500 mt-1">
+                Predictive cutoff trajectory modeling to guarantee statutory attendance (≥ 75%)
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="text-right">
+                <span className="text-xs text-gray-400 uppercase tracking-wider block">Overall DRI</span>
+                <span className="text-2xl font-bold text-gray-900">{stats.debarmentRisk.dri}%</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {stats.debarmentRisk.classes?.map((item) => (
+              <div key={item.classId} className="p-4 rounded-lg bg-gray-50 border border-gray-100 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-gray-900 text-sm truncate">{item.subjectCode}</span>
+                  <span
+                    className={`text-xs px-2 py-0.5 rounded font-medium ${
+                      item.riskLevel === 'SAFE'
+                        ? 'bg-green-100 text-green-700'
+                        : item.riskLevel === 'WARNING'
+                        ? 'bg-yellow-100 text-yellow-700'
+                        : 'bg-red-100 text-red-700'
+                    }`}
+                  >
+                    DRI {item.dri}%
+                  </span>
+                </div>
+                <div className="flex justify-between text-xs text-gray-500">
+                  <span>Current: <strong className="text-gray-700">{item.currentRate}%</strong></span>
+                  <span>Max: <strong className="text-gray-700">{item.maxAchievableRate}%</strong></span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className={`h-2 rounded-full ${
+                      item.currentRate >= 75 ? 'bg-green-500' : 'bg-red-500'
+                    }`}
+                    style={{ width: `${Math.min(100, item.currentRate)}%` }}
+                  ></div>
+                </div>
+                <p className="text-xs text-gray-400">
+                  Need <strong className="text-gray-700">{item.requiredSessions}</strong> more attended out of <strong className="text-gray-700">{item.remaining}</strong> remaining
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Quick Actions & Attendance Progress */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

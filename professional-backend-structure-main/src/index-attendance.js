@@ -1,6 +1,14 @@
+import dns from "node:dns";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import { app } from "./app-attendance.js";
+
+// Windows / ISP local DNS fallback for MongoDB Atlas SRV records
+try {
+  dns.setServers(["8.8.8.8", "1.1.1.1"]);
+} catch (e) {
+  // Ignore in environments where setting DNS servers is restricted
+}
 
 // Load environment variables
 dotenv.config({

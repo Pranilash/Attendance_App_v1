@@ -21,6 +21,7 @@ const FaceVerification = () => {
         embedding: faceData.embedding,
         image: faceData.image,
         livenessPassed: faceData.livenessPassed,
+        livenessMetrics: faceData.livenessMetrics,
       });
 
       if (response.data.success) {

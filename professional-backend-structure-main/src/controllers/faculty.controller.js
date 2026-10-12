@@ -6,9 +6,10 @@ import { AttendanceUser } from '../models/attendanceUser.model.js';
 import { AttendanceSession } from '../models/attendanceSession.model.js';
 import { Attendance } from '../models/attendance.model.js';
 import { Department } from '../models/department.model.js';
+import { TimetableSchedule } from '../models/timetableSchedule.model.js';
 import crypto from 'crypto';
 
-// ==================== STUDENT MANAGEMENT ====================
+// Student management
 
 /**
  * Get students by department (for faculty to add to classes)
@@ -67,7 +68,7 @@ const getDepartments = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, departments, 'Departments fetched successfully'));
 });
 
-// ==================== CLASS MANAGEMENT ====================
+// Class management
 
 /**
  * Create a new class
@@ -256,7 +257,7 @@ const removeStudentFromClass = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, classData, 'Student removed successfully'));
 });
 
-// ==================== SESSION MANAGEMENT ====================
+// Session management
 
 /**
  * Start attendance session
@@ -264,7 +265,7 @@ const removeStudentFromClass = asyncHandler(async (req, res) => {
  * @access Faculty only
  */
 const startSession = asyncHandler(async (req, res) => {
-  const { classId } = req.body;
+  const { classId, bleEnabled, bleRssiThreshold } = req.body;
   const facultyId = req.user._id;
 
   // Verify class belongs to faculty
@@ -291,6 +292,12 @@ const startSession = asyncHandler(async (req, res) => {
   const qrSecret = crypto.randomBytes(32).toString('hex');
   const sessionToken = crypto.randomBytes(32).toString('hex');
 
+  // Generate BLE credentials if proximity verification is requested (Upgrade 2)
+  const isBle = Boolean(bleEnabled);
+  const bleServiceUuid = isBle ? crypto.randomUUID() : null;
+  const bleBeaconSecret = isBle ? crypto.randomBytes(16).toString('hex') : null;
+  const bleBeaconToken = isBle ? crypto.randomBytes(8).toString('hex') : null;
+
   const session = await AttendanceSession.create({
     classId,
     facultyId,
@@ -298,6 +305,11 @@ const startSession = asyncHandler(async (req, res) => {
     sessionToken,
     startTime: new Date(),
     isActive: true,
+    bleEnabled: isBle,
+    bleServiceUuid,
+    bleBeaconSecret,
+    bleBeaconToken,
+    bleRssiThreshold: typeof bleRssiThreshold === 'number' ? bleRssiThreshold : -75,
   });
 
   // Generate QR signature
@@ -316,6 +328,10 @@ const startSession = asyncHandler(async (req, res) => {
         startTime: session.startTime,
         qrSignature: signature,
         timestamp,
+        bleEnabled: isBle,
+        bleServiceUuid,
+        bleBeaconToken,
+        bleRssiThreshold: session.bleRssiThreshold,
       },
       'Session started successfully'
     )
@@ -476,7 +492,7 @@ const getSessionHistory = asyncHandler(async (req, res) => {
   );
 });
 
-// ==================== REPORTS ====================
+// Attendance reports
 
 /**
  * Get class attendance report
@@ -631,6 +647,185 @@ const exportClassCSV = asyncHandler(async (req, res) => {
   res.send(csv);
 });
 
+// Debarment watchlist
+
+/**
+ * Get predictive debarment watchlist for a class
+ * @route GET /api/faculty/classes/:id/debarment-watchlist
+ * @access Faculty only
+ */
+const getClassDebarmentWatchlist = asyncHandler(async (req, res) => {
+  const { id: classId } = req.params;
+  const facultyId = req.user._id;
+
+  const classData = await Class.findOne({ _id: classId, faculty: facultyId }).populate(
+    'students',
+    'name email enrollmentNumber faceRegistered'
+  );
+
+  if (!classData) {
+    throw new ApiError(404, 'Class not found or unauthorized');
+  }
+
+  const totalPlanned = classData.totalPlannedSessions || 40;
+  const sessions = await AttendanceSession.find({ classId });
+  const conducted = sessions.length;
+  const sessionIds = sessions.map((s) => s._id);
+  const remaining = Math.max(0, totalPlanned - conducted);
+
+  const studentWatchlist = await Promise.all(
+    classData.students.map(async (student) => {
+      const attended = await Attendance.countDocuments({
+        sessionId: { $in: sessionIds },
+        studentId: student._id,
+        status: 'present',
+      });
+
+      const currentRate = conducted > 0 ? Math.round((attended / conducted) * 100) : 100;
+      const maxAchievableRate = Math.min(
+        100,
+        Math.round(((attended + remaining) / totalPlanned) * 100)
+      );
+      const requiredSessions = Math.max(0, Math.ceil(0.75 * totalPlanned) - attended);
+
+      // Debarment Risk Index (DRI) calculation
+      let dri = 0;
+      let riskLevel = 'SAFE';
+
+      if (maxAchievableRate < 75) {
+        dri = 100;
+        riskLevel = 'DEBARRED';
+      } else if (remaining > 0) {
+        dri = Math.min(100, Math.max(0, Math.round((requiredSessions / remaining) * 100)));
+        if (dri >= 80) riskLevel = 'CRITICAL';
+        else if (dri >= 50) riskLevel = 'WARNING';
+        else riskLevel = 'SAFE';
+      } else {
+        dri = 0;
+        riskLevel = currentRate >= 75 ? 'SAFE' : 'DEBARRED';
+      }
+
+      return {
+        studentId: student._id,
+        name: student.name,
+        email: student.email,
+        enrollmentNumber: student.enrollmentNumber || 'N/A',
+        faceRegistered: Boolean(student.faceRegistered),
+        attended,
+        conducted,
+        remaining,
+        currentRate,
+        maxAchievableRate,
+        requiredSessions,
+        dri,
+        riskLevel,
+      };
+    })
+  );
+
+  // Sort: DEBARRED and CRITICAL first, then WARNING, then SAFE
+  const severityOrder = { DEBARRED: 0, CRITICAL: 1, WARNING: 2, SAFE: 3 };
+  studentWatchlist.sort((a, b) => severityOrder[a.riskLevel] - severityOrder[b.riskLevel] || b.dri - a.dri);
+
+  const summary = {
+    totalStudents: studentWatchlist.length,
+    debarredCount: studentWatchlist.filter((s) => s.riskLevel === 'DEBARRED').length,
+    criticalCount: studentWatchlist.filter((s) => s.riskLevel === 'CRITICAL').length,
+    warningCount: studentWatchlist.filter((s) => s.riskLevel === 'WARNING').length,
+    safeCount: studentWatchlist.filter((s) => s.riskLevel === 'SAFE').length,
+  };
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        class: {
+          _id: classData._id,
+          name: classData.name,
+          subjectCode: classData.subjectCode,
+          totalPlanned,
+          conducted,
+          remaining,
+        },
+        summary,
+        watchlist: studentWatchlist,
+      },
+      'Debarment watchlist fetched successfully'
+    )
+  );
+});
+
+// Timetable engine
+
+/**
+ * Get faculty weekly timetable
+ * @route GET /api/faculty/timetable
+ * @access Faculty only
+ */
+const getFacultyTimetable = asyncHandler(async (req, res) => {
+  const facultyId = req.user._id;
+
+  const timetable = await TimetableSchedule.find({
+    facultyId,
+    isActive: true,
+  })
+    .populate('classId', 'name subjectCode room')
+    .sort({ dayOfWeek: 1, startTime: 1 });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, timetable, 'Faculty timetable fetched successfully'));
+});
+
+/**
+ * Create timetable schedule slot
+ * @route POST /api/faculty/timetable
+ * @access Faculty only
+ */
+const createTimetableSlot = asyncHandler(async (req, res) => {
+  const facultyId = req.user._id;
+  const { classId, roomNumber, dayOfWeek, startTime, endTime, autoStart, autoEnd } = req.body;
+
+  const classData = await Class.findOne({ _id: classId, faculty: facultyId });
+  if (!classData) {
+    throw new ApiError(404, 'Class not found or unauthorized');
+  }
+
+  const slot = await TimetableSchedule.create({
+    classId,
+    facultyId,
+    roomNumber: roomNumber || 'Room 101',
+    dayOfWeek: Number(dayOfWeek),
+    startTime,
+    endTime,
+    autoStart: autoStart !== false,
+    autoEnd: autoEnd !== false,
+  });
+
+  return res
+    .status(201)
+    .json(new ApiResponse(201, slot, 'Timetable slot created successfully'));
+});
+
+/**
+ * Delete timetable schedule slot
+ * @route DELETE /api/faculty/timetable/:id
+ * @access Faculty only
+ */
+const deleteTimetableSlot = asyncHandler(async (req, res) => {
+  const facultyId = req.user._id;
+  const { id } = req.params;
+
+  const slot = await TimetableSchedule.findOneAndDelete({ _id: id, facultyId });
+  if (!slot) {
+    throw new ApiError(404, 'Timetable slot not found or unauthorized');
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, null, 'Timetable slot deleted successfully'));
+});
+
 export {
   getStudentsByDepartment,
   getDepartments,
@@ -648,4 +843,8 @@ export {
   getClassReport,
   getSessionReport,
   exportClassCSV,
+  getClassDebarmentWatchlist,
+  getFacultyTimetable,
+  createTimetableSlot,
+  deleteTimetableSlot,
 };

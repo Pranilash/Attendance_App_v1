@@ -13,6 +13,9 @@ import cors from "cors";
 
 const app = express();
 
+// Trust reverse proxies (Vercel, Render, AWS, Nginx) so client IP and rate limits work
+app.set("trust proxy", 1);
+
 // Security middleware
 app.use(securityHeaders);
 app.use(cors(corsOptions));

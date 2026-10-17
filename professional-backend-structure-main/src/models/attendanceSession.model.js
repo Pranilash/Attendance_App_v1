@@ -17,7 +17,6 @@ const attendanceSessionSchema = new Schema(
       type: String,
       required: true,
       unique: true,
-      index: true,
     },
     qrSecret: {
       type: String,
@@ -111,6 +110,27 @@ const attendanceSessionSchema = new Schema(
         default: true,
       },
     },
+    // BLE Proximity Verification (VII Sem Upgrade 2)
+    bleEnabled: {
+      type: Boolean,
+      default: false,
+    },
+    bleServiceUuid: {
+      type: String,
+      default: null,
+    },
+    bleBeaconSecret: {
+      type: String,
+      select: false,
+    },
+    bleBeaconToken: {
+      type: String,
+      default: null,
+    },
+    bleRssiThreshold: {
+      type: Number,
+      default: -75, // dBm threshold
+    },
   },
   {
     timestamps: true,
@@ -120,7 +140,6 @@ const attendanceSessionSchema = new Schema(
 // Indexes for better query performance
 attendanceSessionSchema.index({ classId: 1, startTime: -1 });
 attendanceSessionSchema.index({ facultyId: 1, isActive: 1 });
-attendanceSessionSchema.index({ sessionToken: 1 }, { unique: true });
 attendanceSessionSchema.index({ isActive: 1, startTime: -1 });
 
 // Ensure only one active session per class at a time

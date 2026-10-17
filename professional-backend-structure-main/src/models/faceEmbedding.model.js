@@ -7,7 +7,6 @@ const faceEmbeddingSchema = new Schema(
       ref: "AttendanceUser",
       required: [true, "User ID is required"],
       unique: true,
-      index: true,
     },
     // Face embedding vector (128-dimensional array from face-api.js)
     embedding: [
@@ -101,7 +100,6 @@ const faceEmbeddingSchema = new Schema(
 );
 
 // Indexes
-faceEmbeddingSchema.index({ userId: 1 }, { unique: true });
 faceEmbeddingSchema.index({ isActive: 1 });
 
 // Method to calculate cosine similarity between two embeddings

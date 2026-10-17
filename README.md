@@ -1,134 +1,158 @@
-# Smart Attendance System (SAS)
+# Smart Attendance System
 
-A secure attendance management system using **QR codes** and **face verification** to prevent proxy attendance. Built with the MERN stack.
+The Smart Attendance System manages student attendance with rotating QR codes, facial verification, and Bluetooth proximity checks.
+
+## Architecture Diagram
+
+View the interactive system architecture diagram in [smart-attendance-architecture.html](file:///c:/Users/Dell/Desktop/VS%20Code/Development/Attendance%20App/smart-attendance-architecture.html) or open `/architecture-diagram.html` in your web browser.
 
 ## Features
 
-- **Role-based access** — Admin, Faculty, and Student dashboards
-- **QR-based attendance** — Faculty generates rotating QR codes (14s refresh, HMAC-signed); students scan to initiate attendance
-- **Face verification** — Students register their face via webcam; attendance requires real-time face matching (face-api.js, 128-dim embeddings, cosine similarity ≥ 0.6)
-- **Liveness detection** — Blink/head movement checks to prevent photo spoofing
-- **Admin panel** — Manage departments, faculty, students; view system-wide stats
-- **Faculty panel** — Create classes, start/end sessions, live attendance count, reports, CSV export
-- **Student panel** — Scan QR, face registration, attendance history, attendance progress
+- **Role Access Control**: The system provides separate portals for administrators, faculty members, and students.
+- **Rotating QR Codes**: Faculty sessions display HMAC-signed QR codes that refresh every 14 seconds.
+- **Facial Verification**: The system matches student webcam embeddings against registered 128-dimensional biometric vectors. The cosine similarity threshold is 0.60.
+- **Dynamic Liveness**: The system verifies eye blinks and head yaw angles to reject photo spoofing.
+- **Bluetooth Proximity**: The mobile client verifies proximity using classroom Bluetooth Low Energy beacon RSSI levels.
+- **Debarment Risk Index**: The analytics engine calculates student debarment risk and updates the faculty watchlist.
+- **Timetable Synchronization**: The scheduler links class attendance windows to weekly timetable slots.
 
-## Tech Stack
+## Technical Specifications
 
-| Layer | Stack |
-|---|---|
-| **Frontend** | React 18, Vite, Tailwind CSS, Zustand, Axios, react-router-dom, face-api.js, html5-qrcode |
-| **Backend** | Node.js, Express.js, MongoDB (Mongoose), JWT (access + refresh tokens in cookies) |
-| **Security** | Helmet, CORS, rate limiting, HMAC-signed QR codes, bcrypt, Zod validation |
+| Component | Technology | Description |
+|---|---|---|
+| **Frontend Client** | React 18, Vite, Tailwind CSS | Progressive Web App with offline model caching |
+| **Backend Server** | Node.js, Express.js | REST API with JWT access and refresh cookies |
+| **Primary Database** | MongoDB Atlas M0 | Document store for users, classes, and logs |
+| **In-Memory Cache** | Upstash Redis | Ephemeral store for active session tokens |
+| **Biometric Storage** | Cloudinary CDN | Encrypted cloud storage for reference face images |
 
-## Security Features
+## Security Controls
 
-- JWT-based authentication with role-based access control
-- Rotating HMAC-signed QR codes for secure attendance sessions
-- Real-time face verification using face-api.js
-- Liveness detection using blink and head-movement checks
-- Helmet, CORS, rate limiting, and bcrypt-based backend security
-- Zod validation for request sanitization and protection
+- JWT authentication with HTTP-only cookies and role verification.
+- HMAC-SHA256 signature verification on 14-second rotating QR payloads.
+- Rate limiters on authentication and verification endpoints.
+- Zod schema validation on all request bodies.
+- Helmet security headers and strict CORS origin verification.
 
-## Project Structure
+## Directory Structure
 
 ```
-├── frontend/                  # React + Vite frontend
-│   └── src/
-│       ├── components/        # Reusable components (FaceCapture, QRScanner, layouts)
-│       ├── pages/             # Route pages (admin/, faculty/, student/, auth/)
-│       ├── services/api.js    # Axios API client
-│       └── store/authStore.js # Zustand auth state
-├── professional-backend-structure-main/   # Express.js backend
-│   └── src/
-│       ├── controllers/       # Route handlers
-│       ├── models/            # Mongoose schemas
-│       ├── routes/            # Express routers
-│       ├── middlewares/       # Auth, RBAC, security
-│       ├── validators/        # Zod schemas
-│       ├── utils/             # ApiError, ApiResponse, asyncHandler, face verification
-│       └── scripts/           # seed.js, check-face.js
-└── docker-compose.yml         # Optional Docker setup
+Attendance App/
+├── docs/                              # Project documentation and module guides
+├── frontend/                          # React 18 Progressive Web App
+│   ├── public/architecture-diagram.html # Interactive architecture diagram
+│   └── src/                           # Components, pages, and state store
+├── professional-backend-structure-main/ # Express backend
+│   └── src/                           # Controllers, models, routes, and utils
+├── smart-attendance-architecture.html # Standalone architecture diagram
+└── docker-compose.yml                 # Multi-container orchestration
 ```
 
-## Getting Started
+## Documentation Index
+
+Read the focused documentation files in the `docs/` directory:
+
+- [Backend Specification](docs/README-BACKEND-ATTENDANCE.md): Service architecture and API contracts.
+- [Backend API Guide](docs/README-BACKEND.md): Route tables and environment variables.
+- [Frontend Client Guide](docs/README-FRONTEND.md): PWA setup, biometric capture, and state store.
+- [Deployment Guide](docs/DEPLOYMENT.md): Production deployment and cloud hosting procedures.
+- [Deployment Checklist](docs/DEPLOYMENT_READY.md): Pre-flight configuration and security checklist.
+- [Bug Audit](docs/BUG_AUDIT.md): Complete analysis of resolved race conditions and defects.
+- [Capstone Upgrades](docs/VII_SEM_PROPOSED_UPGRADES.md): Engineering specifications for VII semester features.
+
+## Setup Instructions
 
 ### Prerequisites
 
-- **Node.js** v18+
-- **MongoDB** (local or [Atlas](https://www.mongodb.com/atlas))
+- Node.js 18 or higher
+- MongoDB Atlas cluster or local MongoDB instance
 
-### 1. Configure environment
+### 1. Configure the Backend Environment
 
-Create `professional-backend-structure-main/.env`:
+Create `professional-backend-structure-main/.env` with these values:
 
 ```env
-PORT=5000
+PORT=8000
 MONGODB_URI=mongodb://localhost:27017/attendance_system
-ACCESS_TOKEN_SECRET=your-access-secret
-REFRESH_TOKEN_SECRET=your-refresh-secret
-CORS_ORIGIN=http://localhost:3000
+ACCESS_TOKEN_SECRET=your-access-secret-key-min-32-chars
+REFRESH_TOKEN_SECRET=your-refresh-secret-key-min-32-chars
+CORS_ORIGIN=http://localhost:5173
+QR_SECRET=your-qr-hmac-secret-min-32-chars
 ```
 
-### 2. Install dependencies
+### 2. Install Dependencies
+
+Run this command in the backend directory:
 
 ```bash
-cd professional-backend-structure-main && npm install
-cd ../frontend && npm install
+cd professional-backend-structure-main
+npm install
 ```
 
-### 3. Seed the database
+Run this command in the frontend directory:
+
+```bash
+cd ../frontend
+npm install
+```
+
+### 3. Seed Database Records
+
+Run the seed script to create initial departments, faculty, and student accounts:
 
 ```bash
 cd professional-backend-structure-main
 npm run seed
 ```
 
-### 4. Start both servers
+### 4. Start the Application
+
+Start the backend server on port 8000:
 
 ```bash
-# Terminal 1 — Backend (port 5000)
 cd professional-backend-structure-main
-npm run dev
-
-# Terminal 2 — Frontend (port 3000)
-cd frontend
 npm run dev
 ```
 
-Open **http://localhost:3000**
+Start the frontend development server on port 5173:
 
-## Demo Credentials
+```bash
+cd ../frontend
+npm run dev
+```
 
-| Role | Email | Password |
+Open `http://localhost:5173` in your browser.
+
+## Default Credentials
+
+| Role | Email Address | Password |
 |---|---|---|
 | Admin | `admin@attendance.edu` | `Admin@123456` |
 | Faculty | `priya.sharma@attendance.edu` | `Faculty@123` |
 | Student | `arjun.reddy@attendance.edu` | `Student@123` |
 
-## Demo Flow
+## Operational Workflow
 
-1. **Admin** → Login → View dashboard, manage departments/faculty/students
-2. **Faculty** → Login → Go to Session Control → Start session → QR code appears (auto-refreshes)
-3. **Student** → Login → Register Face → Scan QR → Face Verification → Attendance marked ✅
-4. **Faculty** → See live attendance count → End session → View reports / export CSV
+1. The administrator logs in to configure departments, courses, and user accounts.
+2. The student registers their face embedding through the webcam.
+3. The faculty member starts a class session. The portal displays rotating QR codes.
+4. The student scans the QR code.
+5. The student completes dynamic liveness checks and facial verification.
+6. The system marks attendance and updates the class ledger.
+7. The faculty member inspects real-time counts and downloads CSV attendance reports.
 
-## API Endpoints
+## Core API Endpoints
 
-| Route | Description | Auth |
+| Method and Route | Access Level | Description |
 |---|---|---|
-| `POST /api/auth/login` | Login | Public |
-| `POST /api/auth/register/student` | Register student | Public |
-| `POST /api/auth/register/faculty` | Register faculty | Public |
-| `GET /api/admin/stats` | Dashboard stats | Admin |
-| `GET /api/admin/faculty` | List faculty | Admin |
-| `GET /api/admin/students` | List students | Admin |
-| `POST /api/faculty/classes` | Create class | Faculty |
-| `POST /api/faculty/session/start` | Start attendance session | Faculty |
-| `POST /api/faculty/session/end` | End session | Faculty |
-| `GET /api/faculty/report/class/:id` | Class attendance report | Faculty |
-| `POST /api/student/face/register` | Register face embedding | Student |
-| `POST /api/student/attendance/verify-qr` | Verify QR code | Student |
-| `POST /api/student/attendance/verify-face` | Verify face & mark attendance | Student |
+| `POST /api/auth/login` | Public | Authenticate user and issue tokens |
+| `GET /api/admin/stats` | Admin | Return system dashboard statistics |
+| `POST /api/faculty/session/start` | Faculty | Create a new attendance session |
+| `POST /api/faculty/session/end` | Faculty | Close an active attendance session |
+| `GET /api/faculty/class/:id/debarment-watchlist` | Faculty | Return students below 75 percent attendance |
+| `POST /api/student/face/register` | Student | Store 128-dimensional face embedding |
+| `POST /api/student/attendance/verify-qr` | Student | Check rotating QR token and timestamp |
+| `POST /api/student/attendance/verify-face` | Student | Match face vector and record attendance |
 
 ## License
 

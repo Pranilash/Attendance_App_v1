@@ -10,6 +10,7 @@
     "start:original": "node src/index.js",
     "dev:original": "nodemon src/index.js",
     "seed": "node src/scripts/seed.js",
+    "migrate:atlas": "node src/scripts/migrateToAtlas.js",
     "test": "node src/scripts/test-thesis-verification.js",
     "test:thesis": "node src/scripts/test-thesis-verification.js"
   },
@@ -43,7 +44,14 @@
   "devDependencies": {
     "@eslint/js": "^9.13.0",
     "globals": "^15.11.0",
-    "nodemon": "^3.1.7",
+    "nodemon": "^3.1.9",
     "prettier": "^3.3.3"
+  },
+  "allowScripts": {
+    "bcrypt@5.1.1": true
+  },
+  "overrides": {
+    "tar": "^7.5.22",
+    "chokidar": "^4.0.3"
   }
 }

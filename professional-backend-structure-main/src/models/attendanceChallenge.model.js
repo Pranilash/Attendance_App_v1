@@ -33,6 +33,14 @@ const attendanceChallengeSchema = new Schema(
       type: [String],
       default: ["blink", "turnLeft", "turnRight"],
     },
+    bleVerified: {
+      type: Boolean,
+      default: false,
+    },
+    bleRssi: {
+      type: Number,
+      default: null,
+    },
     consumed: {
       type: Boolean,
       default: false,

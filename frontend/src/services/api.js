@@ -62,7 +62,7 @@ api.interceptors.response.use(
   }
 );
 
-// ==================== AUTH API ====================
+// Authentication API
 export const authAPI = {
   login: (credentials) => api.post('/auth/login', credentials),
   register: (userData) => api.post('/auth/register', userData),
@@ -75,7 +75,7 @@ export const authAPI = {
   changePassword: (data) => api.patch('/auth/change-password', data),
 };
 
-// ==================== ADMIN API ====================
+// Administrator API
 export const adminAPI = {
   // Departments
   createDepartment: (data) => api.post('/admin/departments', data),
@@ -99,7 +99,7 @@ export const adminAPI = {
   getStats: () => api.get('/admin/stats'),
 };
 
-// ==================== FACULTY API ====================
+// Faculty API
 export const facultyAPI = {
   // Classes
   createClass: (data) => api.post('/faculty/classes', data),
@@ -124,15 +124,26 @@ export const facultyAPI = {
   getClassReport: (classId) => api.get(`/faculty/report/class/${classId}`),
   getSessionReport: (sessionId) => api.get(`/faculty/report/session/${sessionId}`),
   exportReportCSV: (classId) => api.get(`/faculty/report/class/${classId}/csv`, { responseType: 'blob' }),
+
+  // Debarment Watchlist (VII Sem Upgrade 4)
+  getDebarmentWatchlist: (classId) => api.get(`/faculty/class/${classId}/debarment-watchlist`),
+
+  // Timetable Engine (VII Sem Upgrade 5)
+  getTimetable: () => api.get('/faculty/timetable'),
+  createTimetableSlot: (data) => api.post('/faculty/timetable', data),
+  deleteTimetableSlot: (id) => api.delete(`/faculty/timetable/${id}`),
 };
 
-// ==================== STUDENT API ====================
+// Student API
 export const studentAPI = {
   // Classes
   getClasses: () => api.get('/student/classes'),
 
+  // Timetable (VII Sem Upgrade 5)
+  getTimetable: () => api.get('/student/timetable'),
+
   // Attendance
-  verifyQR: (qrPayload) => api.post('/student/attendance/verify-qr', { qrPayload }),
+  verifyQR: (qrPayload, bleProof) => api.post('/student/attendance/verify-qr', { qrPayload, bleProof }),
   verifyFace: (sessionId, faceData) => api.post('/student/attendance/verify-face', { sessionId, ...faceData }),
   getAttendanceHistory: (params) => api.get('/student/attendance/history', { params }),
   getAttendanceStats: () => api.get('/student/attendance/stats'),
@@ -142,13 +153,13 @@ export const studentAPI = {
   getFaceStatus: () => api.get('/student/face/status'),
 };
 
-// ==================== SESSION API ====================
+// Session API
 export const sessionAPI = {
   validateQR: (qrPayload) => api.post('/session/validate-qr', { qrPayload }),
   getActiveSessions: () => api.get('/session/active'),
 };
 
-// ==================== REPORT API ====================
+// Reports API
 export const reportAPI = {
   getClassReport: (classId) => api.get(`/report/class/${classId}`),
   getSessionReport: (sessionId) => api.get(`/report/session/${sessionId}`),

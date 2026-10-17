@@ -6,6 +6,10 @@
     "frontend",
     "professional-backend-structure-main"
   ],
+  "optionalDependencies": {
+    "@rollup/rollup-linux-x64-gnu": "*",
+    "@rollup/rollup-linux-x64-musl": "*"
+  },
   "scripts": {
     "build": "npm run build --workspace=frontend",
     "dev:backend": "npm run dev --workspace=professional-backend-structure-main",

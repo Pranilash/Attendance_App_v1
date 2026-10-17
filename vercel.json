@@ -2,7 +2,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "professional-backend-structure-main/api/index.js",
+      "src": "api/index.js",
       "use": "@vercel/node",
       "config": {
         "includeFiles": [
@@ -22,11 +22,11 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "professional-backend-structure-main/api/index.js"
+      "dest": "/api/index.js"
     },
     {
       "src": "/health",
-      "dest": "professional-backend-structure-main/api/index.js"
+      "dest": "/api/index.js"
     },
     {
       "handle": "filesystem"

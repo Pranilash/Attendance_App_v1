@@ -1,243 +1,254 @@
 # Frontend Engineering Handoff: Institutional Academic Attendance System
 
-> **Target Audience**: Incoming Frontend Engineers and Autonomous AI Agents.  
+> **Document Type**: Frontend Architecture and UI Specification.  
+> **Target Audience**: Frontend Engineers and AI Agents.  
 > **Repository**: `Attendance_App_v1`.  
-> **Production URL**: https://attendanceappv1.vercel.app.  
-> **Backend Architecture**: Express.js Serverless with MongoDB Atlas Cloud.  
-> **Frontend Stack**: React 18, Vite 6, Tailwind CSS 3, Zustand, Axios, PWA.
+> **Production Deployment**: https://attendanceappv1.vercel.app.  
+> **Standard Compliance**: ASD-STE100 and WCAG 2.1 AA.
 
 ---
 
-## 1. Executive Summary & Vision
+## 1. Executive Directive: Eliminating AI Slop
 
-The objective is to transform the existing working prototype into an **enterprise-grade Academic Attendance and Lecture Management System** tailored for university and college campuses.
+Generic AI generators produce predictable visual errors. They add purple gradients, giant rounded pills, oversized padding, and low information density.
 
-An academic institution requires:
-1. **Dignified, Authoritative Aesthetics**: Clean institutional typography, high-contrast visual cues, zero clutter, and predictable navigation.
-2. **Lecture Hall Ergonomics**:
-   - **For Faculty**: Fullscreen projector display mode with dynamic 14-second rotating QR codes, live incoming attendance ticker, and debarment risk alerts.
-   - **For Students**: Mobile-first PWA with zero-latency biometric verification, camera guides, and real-time attendance margin calculators.
-   - **For Deans & Administrators**: High-density data tables, institutional KPIs, department rosters, and automated audit logs.
+Academic software requires a different approach. Professors, registrars, and university students need an **authoritative, high-density institutional system**. The user interface must look like enterprise higher-education software (similar to Canvas, Banner, or Workday Student).
 
----
+### AI Slop Patterns to Reject vs Academic Production Standards
 
-## 2. Workspace Skills Playbook
-
-This workspace contains specialized engineering plugins under `.agents/plugins/` and skills under `.agents/skills/`. Use them systematically according to the following matrix:
-
-| Task / Need | Primary Skill | Execution Guidelines |
+| AI Slop Pattern | Why It Fails | Institutional Academic Standard |
 |---|---|---|
-| **Design System & Component Styling** | `frontend-ui-engineering` | Build reusable UI primitives (cards, data tables, modals, badges). Enforce WCAG AA accessibility, keyboard navigation, and responsive breakpoints. |
-| **Browser Testing & Visual Audits** | `browser-testing-with-devtools` | Launch real browser subagents to record user flows, inspect console errors, verify network requests, and audit visual layout across viewports. |
-| **Bundle & Runtime Speed** | `performance-optimization` | Implement `React.lazy()` chunking for heavy face-api models and charts. Optimize PWA cache storage and eliminate unnecessary re-renders. |
-| **API Contract & State Flow** | `api-and-interface-design` | Keep typed contracts between backend `/api` endpoints and Axios services. Handle network dropouts, 401 token refreshes, and rate-limit backoffs cleanly. |
-| **Security & Biometric Privacy** | `security-and-hardening` | Sanitize all DOM inputs, ensure camera streams stop on component unmount, and prevent storing raw biometrics in local storage. |
-| **Clarity & Specifications** | `asd-ste100` | Write technical specifications, tool descriptions, and error messages in Simplified Technical English to avoid multi-agent miscommunication. |
-| **Code Simplicity & Zero Bloat** | `ponytail` | Prefer minimal diffs. Avoid introducing unnecessary third-party npm libraries when native browser APIs or Tailwind utilities suffice. |
-| **Architecture & Diagrams** | `archify` | Generate standalone interactive HTML/SVG architecture and sequence diagrams for complex user flows (e.g. dynamic biometric challenge sequence). |
+| **Purple/Indigo Gradients** (`bg-gradient-to-r from-purple-500 to-indigo-600`) | Distracting, looks like a crypto landing page, washes out on lecture projectors | Solid Oxford Navy (`#0f172a`) and crisp Slate borders (`#e2e8f0`) |
+| **Pill Buttons Everywhere** (`rounded-full py-4 px-8`) | Wastes vertical space, signals a mobile toy app | Tailored button radii (`rounded-md text-xs font-semibold px-3 py-2`) |
+| **Card Floods** (rendering tables as floating cards) | Low data density. Faculty cannot scan 80 students | Compact data tables (36px row height, sticky headers, zebra stripes) |
+| **Vague Marketing Copy** ("Welcome to your attendance journey!") | Unprofessional, confuses academic users | Exact university nomenclature ("Department of Computer Science", "Term VII") |
+| **Excessive Whitespace** (`p-10 gap-8` on utility screens) | Requires continuous scrolling to see basic student rosters | Information-dense grids with 16px padding and compact typography |
+| **Low-Contrast Grays** (`text-gray-400` on white) | Fails accessibility, unreadable on classroom projectors | High-contrast text (`text-slate-900` for titles, `text-slate-700` for body) |
+| **Glow & Blur Effects** (`backdrop-blur-xl shadow-2xl`) | Heavy rendering cost on student mobile devices | Clean hairline borders (`border border-slate-200`) and subtle elevation |
 
 ---
 
-## 3. Academic Design System & UI Specifications
+## 2. Institutional Visual Design System
 
-### 3.1 Color Palette (Institutional Trust & Clarity)
-Avoid generic bright colors. Use tailored HSL / Tailwind colors designed for university portals:
+### 2.1 Color Tokens
 
-- **Primary Brand (Oxford Navy)**: `slate-900` (`#0f172a`) and `indigo-900` (`#1e1b4b`) for sidebars, top headers, and primary emphasis.
-- **Academic Accent (Cobalt Blue)**: `indigo-600` (`#4f46e5`) and `blue-600` (`#2563eb`) for primary actions, active tab pills, and focus rings.
-- **Verification Emerald**: `emerald-600` (`#059669`) / `emerald-50` (`#ecfdf5`) for successful biometric match, present status, and safe attendance margins (>75%).
-- **Warning Amber**: `amber-500` (`#f59e0b`) / `amber-50` (`#fffbeb`) for marginal attendance risk (65%–74%) and Bluetooth proximity warnings.
-- **Debarment Crimson**: `rose-600` (`#e11d48`) / `rose-50` (`#fff1f2`) for debarment risk (<65%), failed liveness verification, and expired sessions.
-- **Surface & Canvas**: `slate-50` (`#f8fafc`) for background canvas. `white` (`#ffffff`) for elevated cards with subtle borders (`border-slate-200/80`).
+Do not use decorative rainbow gradients. Use functional, high-contrast academic colors:
 
-### 3.2 Typography Hierarchy
-- **Font Family**: Modern sans-serif (Inter or Plus Jakarta Sans).
-- **Page Titles**: `text-2xl font-bold tracking-tight text-slate-900`
-- **Section Headers**: `text-base font-semibold text-slate-800`
-- **Meta / Labels**: `text-xs font-medium uppercase tracking-wider text-slate-500`
-- **Body & Table Text**: `text-sm text-slate-700`
+- **Institutional Primary (Oxford Slate)**: `slate-900` (`#0f172a`) for header bars, primary buttons, and authoritative text.
+- **Academic Accent (Cobalt)**: `blue-700` (`#1d4ed8`) for interactive links, tab highlights, and focus rings.
+- **Canvas & Surfaces**:
+  - Main background: `slate-50` (`#f8fafc`)
+  - Elevated surfaces (cards, table containers): `white` (`#ffffff`)
+  - Subdued panels: `slate-100` (`#f1f5f9`)
+  - Hairline dividers: `slate-200` (`#e2e8f0`)
+- **Status Indicators (High Contrast, Muted Backgrounds)**:
+  - **Present / Eligible (>75%)**: `emerald-700` (`#047857`) text on `emerald-50` (`#ecfdf5`) background, `emerald-200` border.
+  - **Marginal Risk (65%–74%)**: `amber-700` (`#b45309`) text on `amber-50` (`#fffbeb`) background, `amber-200` border.
+  - **Debarred / Critical (<65%)**: `rose-700` (`#b91c1c`) text on `rose-50` (`#fff1f2`) background, `rose-200` border.
 
-### 3.3 Micro-Interactions & UX States
-1. **Loading States**: Never display blank screens. Display shimmer skeleton placeholders matching table row heights and card dimensions.
-2. **Feedback Banners**: Distinct toast notifications using `react-hot-toast` with clear instructional recovery steps.
-3. **Empty States**: Institutional empty state illustrations with clear call-to-action buttons ("No classes scheduled today", "All students currently above safe attendance threshold").
+### 2.2 Typography & Numerical Formatting
 
----
+- **Font Family**: Inter, system sans-serif fallback.
+- **Numerical Alignment**: Use `font-mono tabular-nums` for roll numbers, timestamps, percentages, and session countdowns.
+- **Text Alignment Rules**:
+  - Text columns (names, course titles): **Left-aligned**.
+  - Status badges and codes: **Centered**.
+  - Quantitative figures (attendance counts, percentages): **Right-aligned**.
 
-## 4. Role-Specific Feature Requirements
+### 2.3 Component Dimension Tokens
 
-### 4.1 Student Portal (`/student/*`)
-
-```
-Student Portal Layout
-├── /student (Student Dashboard)
-│   ├── Attendance Metric Cards (% attended, classes required for 75%)
-│   ├── Predictive Debarment Risk Index (DRI) Indicator
-│   └── Today's Timetable Schedule Widget
-├── /student/scan (QR Scanner & Verification)
-│   ├── Camera Scanner with target crosshairs
-│   └── Bluetooth Low Energy (BLE) proximity badge
-├── /student/verify-face (Biometric Verification)
-│   ├── Video feed with face alignment oval reticle
-│   └── Dynamic Liveness HUD (Blink / Head Turn prompt badges)
-├── /student/register-face (One-time Biometric Enrollment)
-└── /student/history (Attendance Records & Class Filter)
-```
-
-#### Key Student Features to Implement / Enhance:
-1. **Attendance Margin Calculator**:
-   - Display circular percentage gauge.
-   - Display actionable calculations:
-     - If `< 75%`: *"You must attend the next **N** consecutive classes to attain eligibility."*
-     - If `≥ 75%`: *"You can safely miss **N** classes before dropping below eligibility."*
-2. **Biometric Capture HUD**:
-   - Render an interactive facial bounding reticle over the webcam stream.
-   - Display clear prompts for server-issued challenge sequences (`blink`, `turnLeft`, `turnRight`).
-   - Automatically stop video streams (`stream.getTracks().forEach(t => t.stop())`) whenever the user navigates away or verification completes.
-3. **PWA Offline & Model Caching**:
-   - Model weights (`@vladmandic/face-api`) must precache via service worker so verification loads instantly even on weak campus Wi-Fi.
+- **Input Fields & Buttons**: `h-9 px-3 text-xs` (compact, precise).
+- **Table Rows**: `h-10 px-4 py-2 text-xs` (allows 15+ student rows visible without scrolling).
+- **Corner Radii**: `rounded-md` (4px to 6px). Do not use `rounded-2xl` or `rounded-3xl`.
+- **Badges**: `inline-flex items-center px-2 py-0.5 rounded text-xs font-medium`.
 
 ---
 
-### 4.2 Faculty Portal (`/faculty/*`)
+## 3. Academic Domain Microcopy
 
-```
-Faculty Portal Layout
-├── /faculty (Faculty Overview Dashboard)
-│   ├── Quick Class Launchpad
-│   └── Critical Debarment Watchlist Alert Banner
-├── /faculty/session (Active Attendance Control Center)
-│   ├── Classroom Projector Mode (Fullscreen rotating QR)
-│   ├── Live Incoming Attendance Feed (Auto-updating student roster)
-│   └── Manual Student Attendance Override Toggle
-├── /faculty/classes (Class & Student Roster Management)
-├── /faculty/debarment (Debarment Watchlist Analytics - VII Sem Upgrade 4)
-└── /faculty/reports (Attendance Ledger & CSV Export)
-```
+Do not use casual phrases. Use formal academic registrar terminology:
 
-#### Key Faculty Features to Implement / Enhance:
-1. **Classroom Projector Mode**:
-   - Fullscreen button designed for lecture hall HDMI/projector output.
-   - High-contrast, large-format rotating QR code with a circular countdown ring indicating the 14-second refresh cycle.
-   - Real-time side drawer displaying students as they verify their attendance in the room.
-2. **Debarment Watchlist (VII Sem Upgrade 4)**:
-   - Dedicated filterable data grid for students falling below the 75% institutional attendance cutoff.
-   - Calculation formula: $\text{DRI} = 1.0 - (\text{Attended} / \text{Conducted})$.
-   - Instant export of official debarment reports in CSV format.
-3. **Timetable Synchronization (VII Sem Upgrade 5)**:
-   - Synchronize attendance sessions with scheduled timetable slots (`/api/faculty/timetable`).
-   - Auto-fill subject, class section, and scheduled lecture duration.
+| Casual Phrase (Do Not Use) | Academic Domain Term (Use This) |
+|---|---|
+| "My Classes" | "Enrolled Courses" |
+| "Take Attendance" | "Start Attendance Session" |
+| "You're Doing Great!" | "Current Attendance: 82.5% (Eligible)" |
+| "Danger Zone / Warning" | "Debarment Risk (Below 75.0% Statutory Minimum)" |
+| "Face Scan Box" | "Biometric Verification Viewfinder" |
+| "Admin Stuff" | "Registrar & Department Administration" |
+| "Class Members" | "Course Enrollment Roster" |
 
 ---
 
-### 4.3 Administrator Portal (`/admin/*`)
+## 4. Production UI Component Blueprints
 
-```
-Admin Portal Layout
-├── /admin (Campus KPI Dashboard)
-│   ├── Total Students, Faculty, Departments, and Classes
-│   └── Daily Campus Check-in Volume Trend
-├── /admin/departments (Department Management)
-├── /admin/faculty (Faculty User Accounts & Subject Assignment)
-└── /admin/students (Student Directory & Biometric Reset Controls)
+### 4.1 Roster Data Table (`src/components/common/AcademicTable.jsx`)
+
+Provide an enterprise-grade table for faculty gradebooks and student rosters:
+
+```jsx
+// Specifications:
+// - Sticky header row with dark text on slate-100 background.
+// - Fixed column widths to prevent layout jumps.
+// - Right-aligned numerical columns with monospaced tabular figures.
+// - Row hover state with hairline border dividers.
+
+export function AcademicTable({ columns, data }) {
+  return (
+    <div className="overflow-x-auto border border-slate-200 rounded-md bg-white">
+      <table className="w-full text-left border-collapse text-xs">
+        <thead className="bg-slate-100 border-b border-slate-200 text-slate-700 font-semibold uppercase tracking-wider">
+          <tr>
+            {columns.map((col, idx) => (
+              <th
+                key={idx}
+                scope="col"
+                className={`px-4 py-2.5 ${col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left'}`}
+                style={{ width: col.width || 'auto' }}
+              >
+                {col.header}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-150 text-slate-700">
+          {data.map((row, rowIdx) => (
+            <tr key={rowIdx} className="hover:bg-slate-50 transition-colors">
+              {columns.map((col, colIdx) => (
+                <td
+                  key={colIdx}
+                  className={`px-4 py-2 ${col.align === 'right' ? 'text-right font-mono tabular-nums' : col.align === 'center' ? 'text-center' : 'text-left'}`}
+                >
+                  {col.render ? col.render(row) : row[col.accessor]}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
 ```
 
-#### Key Admin Features to Implement / Enhance:
-1. **Data Density & Search Filtering**:
-   - Server-paginated data grids with instant search by enrollment number, faculty employee ID, or department.
-2. **Biometric Administration**:
-   - Campus registrars can reset student biometric status when a student requires facial re-registration.
-3. **Department Roster Control**:
-   - Bulk enrollment of student cohorts into department programs.
+### 4.2 Lecture Hall Projector HUD (`src/pages/faculty/SessionControl.jsx`)
+
+Lecture projectors require high contrast and zero decorative clutter:
+
+1. **Header**: Course code, section name, and room number visible from 20 meters (`text-2xl font-bold text-slate-900`).
+2. **Rotating QR Frame**:
+   - Clean 320px x 320px white canvas with a sharp 2px solid border (`border-slate-300`).
+   - SVG circular progress ring indicating the 14-second rotation interval.
+   - Text indicator below the code: `"Rotates every 14s • Dynamic HMAC-SHA256 Signed"`.
+3. **Live Roster Drawer**:
+   - Split-screen right column displaying incoming student verifications in real time.
+   - High-contrast counter: `Attended: 42 / 60 (70.0%)`.
+
+### 4.3 Biometric Verification Viewfinder (`src/components/face/FaceCapture.jsx`)
+
+Do not display a generic video box with cartoon borders. Use a biometric HUD:
+
+1. **Webcam Viewfinder Frame**:
+   - 4:3 aspect ratio with hairline corner alignment brackets (`w-6 h-6 border-2 border-blue-500`).
+   - Subtle semi-transparent oval face silhouette guiding the student to position their head.
+2. **Dynamic Challenge Pill**:
+   - High-visibility status badge above the video feed.
+   - Example: `[ACTION 1/2: BLINK SLOWLY]` in amber when awaiting eye blink. Changes to `[VERIFIED]` in emerald upon detection.
+3. **Stream Teardown**:
+   - Enforce explicit camera cleanup on unmount:
+     ```javascript
+     useEffect(() => {
+       return () => {
+         if (streamRef.current) {
+           streamRef.current.getTracks().forEach((track) => track.stop());
+         }
+       };
+     }, []);
+     ```
+
+### 4.4 Debarment Risk Margin Widget (`src/pages/student/StudentDashboard.jsx`)
+
+Display exact numerical margin calculations rather than vague progress bars:
+
+```jsx
+// Academic calculation logic:
+// Total Conducted Sessions: C
+// Attended Sessions: A
+// Required Statutory Threshold: 75% (0.75)
+//
+// If (A / C) < 0.75:
+//   Needed consecutive classes to reach 75%: Math.ceil((0.75 * C - A) / 0.25)
+// If (A / C) >= 0.75:
+//   Permissible safe absences before falling below 75%: Math.floor((A - 0.75 * C) / 0.75)
+```
+
+Display these values in an institutional metric card:
+- Monospaced fraction: `18 / 24 Sessions Attended (75.0%)`
+- Status pill: `Statutory Minimum Satisfied`
+- Advisory notice: `"You can miss 0 additional lectures before debarment risk."`
 
 ---
 
-## 5. Technical Architecture & File Organization
+## 5. Screen-by-Screen Refactoring Instructions
 
-```
-frontend/src/
-├── components/
-│   ├── common/             # Reusable UI primitives (Button, Modal, Card, Badge, Table, Input)
-│   ├── layout/             # Navbar, Sidebar, PageHeader, ProtectedRoute
-│   ├── face/               # FaceCapture, LivenessReticle, CameraGuide
-│   ├── qr/                 # QRScanner, ProjectorQRDisplay, RefreshCountdown
-│   └── timetable/          # TimetableGrid, SlotCard
-├── pages/
-│   ├── auth/               # Login, Profile
-│   ├── admin/              # AdminDashboard, ManageDepartments, ManageFaculty, ManageStudents
-│   ├── faculty/            # FacultyDashboard, SessionControl, ManageClasses, AttendanceReports
-│   └── student/            # StudentDashboard, ScanQR, FaceVerification, FaceRegistration, AttendanceHistory
-├── services/
-│   ├── api.js              # Centralized Axios instance with auth interceptors
-│   ├── authService.js      # Login, me, token refresh
-│   ├── facultyService.js   # Class, session, debarment watchlist, CSV export
-│   └── studentService.js   # Scan, face verify, timetable, stats
-└── store/
-    ├── authStore.js        # Global user auth, tokens, role permissions
-    └── sessionStore.js     # Active classroom session state
-```
+### 5.1 Admin Portal Refactoring (`/admin/*`)
 
----
+1. **`AdminDashboard.jsx`**:
+   - Replace oversized metric cards with an institutional KPI grid (4 columns: Total Students, Total Faculty, Active Courses, Daily Attendance Volume).
+   - Display a compact tabular ledger of today's attendance sessions.
+2. **`ManageStudents.jsx` & `ManageFaculty.jsx`**:
+   - Replace any card layouts with `AcademicTable`.
+   - Add search input with instantaneous client-side filter by enrollment number or department code.
+   - Provide explicit action buttons (`View Record`, `Reset Biometrics`) in table action cells.
 
-## 6. Implementation Plan: 5-Phase Roadmap
+### 5.2 Faculty Portal Refactoring (`/faculty/*`)
 
-### Phase 1: Institutional Design System Foundation
-- Refactor `src/components/common/` with cohesive design tokens (buttons, tables, cards, badges, modal dialogs).
-- Standardize top navigation and collapsible sidebar in `src/components/layout/`.
-- Ensure standard dark/light surface contrast and remove ad-hoc inline styles.
+1. **`FacultyDashboard.jsx`**:
+   - Place an immediate "Active Class Launchpad" at the top of the screen.
+   - If students in any assigned course are below 75% attendance, display a compact red warning banner: `"Debarment Watchlist Alert: N students below 75.0% threshold"`.
+2. **`AttendanceReports.jsx`**:
+   - Ensure the CSV export button uses standard university column headers (`Enrollment Number`, `Student Name`, `Department`, `Attended Sessions`, `Total Sessions`, `Attendance Percentage`, `Debarment Status`).
 
-### Phase 2: Lecture Hall Projector Mode & Faculty Command Center
-- Upgrade `src/pages/faculty/SessionControl.jsx` with a dedicated "Projector View" mode.
-- Integrate 14-second visual progress ring displaying countdown to the next rotating QR signature.
-- Build live attending student card drawer with instant counters.
+### 5.3 Student Portal Refactoring (`/student/*`)
 
-### Phase 3: Student Mobile PWA & Camera Reticle HUD
-- Refactor `src/components/face/FaceCapture.jsx` to render an active face detection oval with guide landmarks.
-- Integrate step-by-step liveness prompt cards with smooth transition animations.
-- Ensure camera resource cleanup in `useEffect` return functions.
-
-### Phase 4: Debarment Risk Index (DRI) & Timetable Integration
-- Enhance `src/pages/student/StudentDashboard.jsx` with the attendance margin calculator card.
-- Build `src/pages/faculty/DebarmentWatchlist.jsx` with tabular filtering (`<75%`, `<65%`) and instant CSV download.
-- Integrate timetable weekly calendar grid from `/api/student/timetable` and `/api/faculty/timetable`.
-
-### Phase 5: Comprehensive Browser Verification & Accessibility
-- Run the autonomous test suite `node professional-backend-structure-main/src/scripts/testAllEndpointsLive.js` to ensure 100% backend endpoint pass rate.
-- Execute browser subagent tests using the `browser-testing-with-devtools` skill to verify responsive rendering across mobile (390px) and desktop (1440px) viewports.
+1. **`StudentDashboard.jsx`**:
+   - Display the student's primary course table with columns: `Course Code`, `Course Title`, `Faculty`, `Attended / Held`, `Percentage`, `Eligibility Status`.
+2. **`ScanQR.jsx`**:
+   - Ensure the camera scanner renders a high-contrast targeting square with hairline corners.
+   - Display the classroom BLE proximity verification indicator when beacon verification is active.
 
 ---
 
-## 7. Verified Test Credentials & Live Endpoints
+## 6. Engineering Plugin Execution Guide
 
-The system is fully connected to the live MongoDB Atlas database and Vercel serverless backend:
+Incoming engineers and autonomous agents must invoke the workspace tools for each task:
 
-- **Live URL**: `https://attendanceappv1.vercel.app`
-- **Backend API**: `https://attendanceappv1.vercel.app/api`
-- **Health Endpoint**: `https://attendanceappv1.vercel.app/health`
-
-| Role | Username | Password | Biometric Status |
-|---|---|---|---|
-| **Administrator** | `admin@attendance.edu` | `Admin@123456` | Bypass |
-| **Faculty Member**| `priya.sharma@attendance.edu` | `Faculty@123` | Bypass |
-| **Enrolled Student**| `arjun.reddy@attendance.edu` | `Student@123` | **Registered** (128-dim embedding loaded) |
+1. **Styling and Component Structure**:
+   - Apply `frontend-ui-engineering` to ensure all components use strict tokens from `src/index.css` rather than ad-hoc inline styles.
+2. **Browser Validation**:
+   - Use `browser-testing-with-devtools` to start headless and visible browser subagents.
+   - Audit viewports: Mobile (390px x 844px), Tablet (768px x 1024px), Desktop (1440px x 900px).
+3. **Performance Optimization**:
+   - Apply `performance-optimization` to verify bundle sizes.
+   - Ensure face-api models load asynchronously and precache through the service worker.
+4. **Codebase Memory & Impact**:
+   - Use `codebase-memory` (`search_graph`, `search_code`) to trace endpoint connections and props before renaming interfaces.
 
 ---
 
-## 8. Development Commands
+## 7. Verification & Quality Acceptance Criteria
 
-```bash
-# Install root and workspace dependencies
-npm install
+Before marking any frontend task complete, verify these gates:
 
-# Start local backend server (Port 8000)
-npm run dev:backend
-
-# Start local frontend server (Port 5173)
-npm run dev:frontend
-
-# Run 40-endpoint live regression test suite
-node professional-backend-structure-main/src/scripts/testAllEndpointsLive.js
-
-# Build production bundle
-npm run build
-```
+1. **Zero Console Errors**: No unhandled React lifecycle warnings or face-api WebGL errors in browser DevTools.
+2. **Live Backend Sync**: All components must fetch and mutate live data on `https://attendanceappv1.vercel.app` backed by MongoDB Atlas.
+3. **Automated Test Run**:
+   ```bash
+   node professional-backend-structure-main/src/scripts/testAllEndpointsLive.js
+   ```
+   Must pass with **40 / 40 Passed (100%)**.
+4. **Documentation Compliance**:
+   ```bash
+   python .agents/skills/asd-ste100/scripts/ste-lint.py docs/FRONTEND_ACADEMIC_HANDOFF.md
+   ```
+   Must pass with **0 violations**.

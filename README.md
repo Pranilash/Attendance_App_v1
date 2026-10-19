@@ -123,13 +123,15 @@ npm run dev:frontend
 
 Open `http://localhost:5173` in your browser.
 
-## Verified Test Credentials
+## System Accounts
 
-| Role | Email Address | Password | Face Status |
+| Role | Email Address | Biometric Status | Setup Method |
 |---|---|---|---|
-| Admin | `admin@attendance.edu` | `Admin@123456` | Not required |
-| Faculty | `priya.sharma@attendance.edu` | `Faculty@123` | Not required |
-| Student | `arjun.reddy@attendance.edu` | `Student@123` | Registered (128-dim) |
+| Admin | `admin@attendance.edu` | Not required | Seeded during database initialization |
+| Faculty | `priya.sharma@attendance.edu` | Not required | Seeded during database initialization |
+| Student | `arjun.reddy@attendance.edu` | Registered (128-dim vector) | Seeded during database initialization |
+
+Administrators configure initial passwords during database setup and rotate them through `/api/auth/change-password`.
 
 ## Automated Verification Suite
 

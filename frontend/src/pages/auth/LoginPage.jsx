@@ -154,39 +154,6 @@ const LoginPage = () => {
           </Link>
         </p>
       </div>
-
-      {/* Demo Credentials */}
-      <div className="mt-6 p-4 bg-white/5 rounded-lg border border-white/10">
-        <p className="text-xs font-semibold text-purple-300 text-center mb-2.5">Quick Demo Accounts (Click to fill)</p>
-        <div className="grid grid-cols-3 gap-2">
-          <button
-            type="button"
-            onClick={() => setFormData({ email: 'admin@attendance.edu', password: 'Admin@123456' })}
-            className="px-2 py-1.5 bg-purple-600/30 hover:bg-purple-600/50 border border-purple-500/30 rounded text-xs text-purple-200 transition-colors text-center"
-          >
-            Admin
-          </button>
-          <button
-            type="button"
-            onClick={() => setFormData({ email: 'priya.sharma@attendance.edu', password: 'Faculty@123' })}
-            className="px-2 py-1.5 bg-blue-600/30 hover:bg-blue-600/50 border border-blue-500/30 rounded text-xs text-blue-200 transition-colors text-center"
-          >
-            Faculty
-          </button>
-          <button
-            type="button"
-            onClick={() => setFormData({ email: 'arjun.reddy@attendance.edu', password: 'Student@123' })}
-            className="px-2 py-1.5 bg-emerald-600/30 hover:bg-emerald-600/50 border border-emerald-500/30 rounded text-xs text-emerald-200 transition-colors text-center"
-          >
-            Student
-          </button>
-        </div>
-        <div className="mt-3 text-[11px] text-gray-400 space-y-1">
-          <p><span className="text-gray-300 font-medium">Admin:</span> admin@attendance.edu / Admin@123456</p>
-          <p><span className="text-gray-300 font-medium">Faculty:</span> priya.sharma@attendance.edu / Faculty@123</p>
-          <p><span className="text-gray-300 font-medium">Student:</span> arjun.reddy@attendance.edu / Student@123</p>
-        </div>
-      </div>
     </div>
   );
 };

@@ -62,6 +62,15 @@ Attendance App/
 └── package.json                       # Monorepo workspaces definition
 ```
 
+## Documentation Index
+
+Read the focused documentation files in the `docs/` directory:
+
+- [Frontend Academic Handoff](docs/FRONTEND_ACADEMIC_HANDOFF.md): Guidelines for building an institutional academic frontend with workspace skills.
+- [Backend Specification](docs/README-BACKEND-ATTENDANCE.md): Service architecture and API contracts.
+- [Capstone Upgrades](docs/VII_SEM_PROPOSED_UPGRADES.md): Engineering specifications for VII semester features.
+- [Bug Audit](docs/BUG_AUDIT.md): Analysis of resolved race conditions and defects.
+
 ## Setup Instructions
 
 ### Prerequisites

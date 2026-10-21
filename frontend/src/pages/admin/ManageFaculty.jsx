@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, Users, Search, Loader2, X, Mail, Building2, MoreVertical } from 'lucide-react';
+import { Plus, Edit2, Trash2, Users, Search, Loader2, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { adminAPI } from '../../services/api';
+import AcademicTable from '../../components/common/AcademicTable';
 
 const ManageFaculty = () => {
   const [faculty, setFaculty] = useState([]);
@@ -103,47 +104,126 @@ const ManageFaculty = () => {
     return matchesSearch && matchesDepartment;
   });
 
+  const columns = [
+    {
+      header: 'Faculty Member',
+      accessor: 'name',
+      width: '220px',
+      render: (row) => (
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 bg-slate-100 border border-slate-200 rounded-md flex items-center justify-center flex-shrink-0">
+            <span className="text-[11px] font-semibold text-slate-600">
+              {row.name.charAt(0).toUpperCase()}
+            </span>
+          </div>
+          <span className="text-xs font-semibold text-slate-900">{row.name}</span>
+        </div>
+      ),
+    },
+    {
+      header: 'Email',
+      accessor: 'email',
+      render: (row) => <span className="text-slate-600">{row.email}</span>,
+    },
+    {
+      header: 'Department',
+      accessor: 'department',
+      render: (row) => <span className="text-slate-700">{row.department?.name || '—'}</span>,
+    },
+    {
+      header: 'Courses',
+      accessor: 'classesCount',
+      align: 'right',
+      width: '80px',
+      render: (row) => (
+        <span className="font-mono tabular-nums text-slate-700">{row.classesCount || 0}</span>
+      ),
+    },
+    {
+      header: 'Status',
+      accessor: 'isActive',
+      align: 'center',
+      width: '90px',
+      render: (row) => (
+        <span
+          className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+            row.isActive
+              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+              : 'bg-rose-50 text-rose-700 border border-rose-200'
+          }`}
+        >
+          {row.isActive ? 'Active' : 'Inactive'}
+        </span>
+      ),
+    },
+    {
+      header: 'Actions',
+      align: 'right',
+      width: '100px',
+      render: (row) => (
+        <div className="flex items-center justify-end gap-1">
+          <button
+            onClick={() => handleOpenModal(row)}
+            className="p-1.5 text-slate-400 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors"
+            title="View Record"
+          >
+            <Edit2 className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={() => handleDelete(row._id)}
+            className="p-1.5 text-slate-400 hover:text-rose-700 hover:bg-rose-50 rounded-md transition-colors"
+            title="Delete Faculty"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      ),
+    },
+  ];
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
+        <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Manage Faculty</h1>
-          <p className="text-gray-500 mt-1">Add and manage faculty members</p>
+          <h1 className="text-lg font-bold text-slate-900">Faculty Directory</h1>
+          <p className="text-xs text-slate-500 mt-0.5">
+            {filteredFaculty.length} faculty member{filteredFaculty.length !== 1 ? 's' : ''} registered
+          </p>
         </div>
         <button
           onClick={() => handleOpenModal()}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors"
+          className="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-900 text-white rounded-md hover:bg-slate-800 transition-colors text-xs font-semibold"
         >
-          <Plus className="w-5 h-5" />
+          <Plus className="w-3.5 h-3.5" />
           Add Faculty
         </button>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+      <div className="flex flex-col sm:flex-row gap-2">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
             type="text"
-            placeholder="Search faculty..."
+            placeholder="Search by name or email…"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            className="w-full pl-8 pr-3 h-9 text-xs border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-700 focus:border-transparent"
           />
         </div>
         <select
           value={filterDepartment}
           onChange={(e) => setFilterDepartment(e.target.value)}
-          className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+          className="h-9 px-3 text-xs border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-700"
         >
           <option value="">All Departments</option>
           {departments.map((dept) => (
@@ -155,97 +235,30 @@ const ManageFaculty = () => {
       </div>
 
       {/* Faculty Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr className="text-left text-sm font-medium text-gray-500">
-                <th className="px-6 py-3">Name</th>
-                <th className="px-6 py-3">Email</th>
-                <th className="px-6 py-3">Department</th>
-                <th className="px-6 py-3">Classes</th>
-                <th className="px-6 py-3">Status</th>
-                <th className="px-6 py-3 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {filteredFaculty.map((fac) => (
-                <tr key={fac._id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                        <span className="text-sm font-medium text-blue-600">
-                          {fac.name.charAt(0).toUpperCase()}
-                        </span>
-                      </div>
-                      <span className="font-medium text-gray-900">{fac.name}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">{fac.email}</td>
-                  <td className="px-6 py-4 text-sm text-gray-500">
-                    {fac.department?.name || 'N/A'}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">
-                    {fac.classesCount || 0} classes
-                  </td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                        fac.isActive
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-red-100 text-red-700'
-                      }`}
-                    >
-                      {fac.isActive ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <button
-                        onClick={() => handleOpenModal(fac)}
-                        className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(fac._id)}
-                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {filteredFaculty.length === 0 && (
-          <div className="text-center py-12">
-            <Users className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500">No faculty members found</p>
-          </div>
-        )}
-      </div>
+      <AcademicTable
+        columns={columns}
+        data={filteredFaculty}
+        emptyIcon={Users}
+        emptyMessage="No faculty members found matching the current filters"
+      />
 
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/50" onClick={handleCloseModal} />
-          <div className="relative bg-white rounded-xl p-6 w-full max-w-md mx-4 shadow-xl">
+          <div className="absolute inset-0 bg-slate-900/40" onClick={handleCloseModal} />
+          <div className="relative bg-white rounded-md p-5 w-full max-w-md mx-4 border border-slate-200 shadow-xl">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">
-                {editingFaculty ? 'Edit Faculty' : 'Add Faculty'}
+              <h2 className="text-sm font-bold text-slate-900">
+                {editingFaculty ? 'Edit Faculty Record' : 'Add Faculty'}
               </h2>
-              <button onClick={handleCloseModal} className="p-2 text-gray-400 hover:text-gray-600 rounded-lg">
-                <X className="w-5 h-5" />
+              <button onClick={handleCloseModal} className="p-1.5 text-slate-400 hover:text-slate-600 rounded-md">
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1">
                   Full Name
                 </label>
                 <input
@@ -254,13 +267,13 @@ const ManageFaculty = () => {
                   value={formData.name}
                   onChange={handleChange}
                   required
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full h-9 px-3 text-xs border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-700"
                   placeholder="Enter full name"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1">
                   Email Address
                 </label>
                 <input
@@ -269,13 +282,13 @@ const ManageFaculty = () => {
                   value={formData.email}
                   onChange={handleChange}
                   required
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full h-9 px-3 text-xs border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-700"
                   placeholder="Enter email"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1">
                   Password {editingFaculty && '(leave blank to keep current)'}
                 </label>
                 <input
@@ -284,13 +297,13 @@ const ManageFaculty = () => {
                   value={formData.password}
                   onChange={handleChange}
                   required={!editingFaculty}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full h-9 px-3 text-xs border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-700"
                   placeholder="Enter password"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1">
                   Department
                 </label>
                 <select
@@ -298,7 +311,7 @@ const ManageFaculty = () => {
                   value={formData.department}
                   onChange={handleChange}
                   required
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full h-9 px-3 text-xs border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-700"
                 >
                   <option value="">Select Department</option>
                   {departments.map((dept) => (
@@ -309,19 +322,19 @@ const ManageFaculty = () => {
                 </select>
               </div>
 
-              <div className="flex gap-3 pt-4">
+              <div className="flex gap-2 pt-3">
                 <button
                   type="button"
                   onClick={handleCloseModal}
-                  className="flex-1 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50"
+                  className="flex-1 h-9 px-3 text-xs font-semibold border border-slate-200 text-slate-700 rounded-md hover:bg-slate-50"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600"
+                  className="flex-1 h-9 px-3 text-xs font-semibold bg-slate-900 text-white rounded-md hover:bg-slate-800"
                 >
-                  {editingFaculty ? 'Update' : 'Create'}
+                  {editingFaculty ? 'Update Record' : 'Create Faculty'}
                 </button>
               </div>
             </form>

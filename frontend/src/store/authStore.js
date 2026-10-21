@@ -32,7 +32,7 @@ const useAuthStore = create(
       logout: () => {
         try {
           localStorage.removeItem('auth-storage');
-        } catch (e) {
+        } catch {
           // ignore localStorage access error
         }
         set({

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Mail, Lock, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, Loader2, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useAuthStore from '../../store/authStore';
 import { authAPI } from '../../services/api';
@@ -29,9 +29,8 @@ const LoginPage = () => {
       const { user, accessToken } = response.data.data;
 
       setAuth(user, accessToken);
-      toast.success('Login successful!');
+      toast.success('Identity authenticated');
 
-      // Navigate based on role
       switch (user.role) {
         case 'admin':
           navigate('/admin');
@@ -47,32 +46,35 @@ const LoginPage = () => {
       }
     } catch (error) {
       console.error('Login error:', error);
+      toast.error(error.response?.data?.message || 'Authentication credentials rejected');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="space-y-6">
-      <div className="text-center">
-        <h2 className="text-2xl font-bold text-white">Welcome back</h2>
-        <p className="mt-2 text-sm text-gray-300">
-          Sign in to your account to continue
+    <div className="space-y-5">
+      <div className="border-b border-slate-100 pb-3">
+        <h2 className="text-base font-bold tracking-tight text-slate-900">
+          Sign In to Portal
+        </h2>
+        <p className="mt-0.5 text-xs text-slate-500">
+          Enter your credentials to access your Smart Attendance System account
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Email Field */}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Email Address */}
         <div>
           <label
             htmlFor="email"
-            className="block text-sm font-medium text-gray-200 mb-1"
+            className="block text-[11px] font-semibold uppercase tracking-wider text-slate-700 mb-1"
           >
-            Email address
+            Institutional Email Address
           </label>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Mail className="h-5 w-5 text-gray-400" />
+              <Mail className="h-4 w-4 text-slate-400" />
             </div>
             <input
               id="email"
@@ -82,23 +84,23 @@ const LoginPage = () => {
               required
               value={formData.email}
               onChange={handleChange}
-              className="block w-full pl-10 pr-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-              placeholder="Enter your email"
+              className="block w-full h-9 pl-9 pr-3 text-xs bg-white border border-slate-300 rounded-md text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-700 transition-colors"
+              placeholder="name@university.edu"
             />
           </div>
         </div>
 
-        {/* Password Field */}
+        {/* Password */}
         <div>
           <label
             htmlFor="password"
-            className="block text-sm font-medium text-gray-200 mb-1"
+            className="block text-[11px] font-semibold uppercase tracking-wider text-slate-700 mb-1"
           >
             Password
           </label>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Lock className="h-5 w-5 text-gray-400" />
+              <Lock className="h-4 w-4 text-slate-400" />
             </div>
             <input
               id="password"
@@ -108,18 +110,18 @@ const LoginPage = () => {
               required
               value={formData.password}
               onChange={handleChange}
-              className="block w-full pl-10 pr-10 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-              placeholder="Enter your password"
+              className="block w-full h-9 pl-9 pr-9 text-xs bg-white border border-slate-300 rounded-md text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-700 transition-colors"
+              placeholder="••••••••••••"
             />
             <button
               type="button"
-              className="absolute inset-y-0 right-0 pr-3 flex items-center"
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600"
               onClick={() => setShowPassword(!showPassword)}
             >
               {showPassword ? (
-                <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-300" />
+                <EyeOff className="h-4 w-4" />
               ) : (
-                <Eye className="h-5 w-5 text-gray-400 hover:text-gray-300" />
+                <Eye className="h-4 w-4" />
               )}
             </button>
           </div>
@@ -129,28 +131,31 @@ const LoginPage = () => {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full flex justify-center items-center gap-2 py-2.5 px-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-medium rounded-lg shadow-lg shadow-purple-500/25 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full h-9 flex justify-center items-center gap-2 px-4 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
         >
           {isLoading ? (
             <>
-              <Loader2 className="w-5 h-5 animate-spin" />
-              Signing in...
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              <span>Authenticating Credentials...</span>
             </>
           ) : (
-            'Sign in'
+            <>
+              <span>Authenticate Session</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </>
           )}
         </button>
       </form>
 
       {/* Register Link */}
-      <div className="text-center">
-        <p className="text-sm text-gray-300">
-          Don't have an account?{' '}
+      <div className="pt-2 border-t border-slate-100 text-center">
+        <p className="text-xs text-slate-600">
+          Unregistered student or faculty member?{' '}
           <Link
             to="/register"
-            className="font-medium text-purple-400 hover:text-purple-300 transition-colors"
+            className="font-semibold text-blue-700 hover:text-blue-800 hover:underline transition-colors"
           >
-            Register here
+            Register Institutional Account
           </Link>
         </p>
       </div>

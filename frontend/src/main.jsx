@@ -5,6 +5,10 @@ import { Toaster } from 'react-hot-toast'
 import App from './App.jsx'
 import './index.css'
 import { registerSW } from 'virtual:pwa-register'
+import useThemeStore from './store/themeStore'
+
+// Initialize persistent theme
+useThemeStore.getState().initTheme()
 
 // Auto-register service worker for PWA & offline model caching
 registerSW({ immediate: true })

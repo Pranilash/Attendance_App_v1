@@ -12,9 +12,9 @@
 
 const AcademicTable = ({ columns, data, emptyIcon: EmptyIcon, emptyMessage = 'No records found' }) => {
   return (
-    <div className="overflow-x-auto border border-slate-200 rounded-md bg-white">
+    <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-md bg-white dark:bg-slate-900 transition-colors">
       <table className="w-full text-left border-collapse text-xs">
-        <thead className="bg-slate-100 border-b border-slate-200 text-slate-700 font-semibold uppercase tracking-wider">
+        <thead className="bg-slate-100 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 font-semibold uppercase tracking-wider">
           <tr>
             {columns.map((col, idx) => (
               <th
@@ -28,9 +28,9 @@ const AcademicTable = ({ columns, data, emptyIcon: EmptyIcon, emptyMessage = 'No
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100 text-slate-700">
+        <tbody className="divide-y divide-slate-100 dark:divide-slate-800/70 text-slate-700 dark:text-slate-300">
           {data.map((row, rowIdx) => (
-            <tr key={row._id || row.id || rowIdx} className="hover:bg-slate-50 transition-colors">
+            <tr key={row._id || row.id || rowIdx} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
               {columns.map((col, colIdx) => (
                 <td
                   key={colIdx}
@@ -46,8 +46,8 @@ const AcademicTable = ({ columns, data, emptyIcon: EmptyIcon, emptyMessage = 'No
 
       {data.length === 0 && (
         <div className="text-center py-10">
-          {EmptyIcon && <EmptyIcon className="w-10 h-10 text-slate-300 mx-auto mb-3" />}
-          <p className="text-sm text-slate-500">{emptyMessage}</p>
+          {EmptyIcon && <EmptyIcon className="w-10 h-10 text-slate-300 dark:text-slate-700 mx-auto mb-3" />}
+          <p className="text-sm text-slate-500 dark:text-slate-400">{emptyMessage}</p>
         </div>
       )}
     </div>

@@ -13,6 +13,7 @@ export const apiLimiter = rateLimit({
   },
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  validate: { xForwardedForHeader: false },
   handler: (req, res) => {
     res.status(429).json({
       success: false,
@@ -34,6 +35,7 @@ export const authLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skipSuccessfulRequests: true, // Don't count successful requests
+  validate: { xForwardedForHeader: false },
 });
 
 // Rate limit for attendance marking (prevent spam)
@@ -47,6 +49,7 @@ export const attendanceLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { xForwardedForHeader: false },
 });
 
 // Rate limit for QR verification
@@ -60,6 +63,7 @@ export const qrVerificationLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { xForwardedForHeader: false },
 });
 
 // Helmet security configuration
@@ -94,7 +98,8 @@ export const corsOptions = {
 
     if (
       allowedOrigins.indexOf(origin) !== -1 ||
-      (process.env.VERCEL && (origin.endsWith(".vercel.app") || (process.env.VERCEL_URL && origin.includes(process.env.VERCEL_URL))))
+      origin.endsWith(".vercel.app") ||
+      (process.env.VERCEL_URL && origin.includes(process.env.VERCEL_URL))
     ) {
       callback(null, true);
     } else {

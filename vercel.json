@@ -29,11 +29,19 @@
       "dest": "/api/index.js"
     },
     {
+      "src": "/assets/(.*)",
+      "dest": "/frontend/assets/$1"
+    },
+    {
+      "src": "/((?:favicon|icon|pwa|manifest|sw|workbox|registerSW).*|.*\\.(?:png|jpg|jpeg|gif|svg|ico|webp|js|css|json|webmanifest|woff2?|map|wasm|html))",
+      "dest": "/frontend/$1"
+    },
+    {
       "handle": "filesystem"
     },
     {
       "src": "/(.*)",
-      "dest": "/index.html"
+      "dest": "/frontend/index.html"
     }
   ]
 }

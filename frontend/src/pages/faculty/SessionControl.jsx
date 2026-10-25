@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Play, StopCircle, QrCode, Clock, Users, CheckCircle, XCircle, RefreshCw, Loader2 } from 'lucide-react';
+import { Play, StopCircle, Users, CheckCircle, XCircle, RefreshCw, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import QRCode from 'qrcode';
 import { facultyAPI } from '../../services/api';
@@ -12,14 +12,18 @@ const SessionControl = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isStarting, setIsStarting] = useState(false);
   const [attendanceStats, setAttendanceStats] = useState({ present: 0, absent: 0, total: 0 });
+  const [countdown, setCountdown] = useState(14);
   const qrRefreshInterval = useRef(null);
-  const canvasRef = useRef(null);
+  const countdownInterval = useRef(null);
 
   useEffect(() => {
     fetchClasses();
     return () => {
       if (qrRefreshInterval.current) {
         clearInterval(qrRefreshInterval.current);
+      }
+      if (countdownInterval.current) {
+        clearInterval(countdownInterval.current);
       }
     };
   }, []);
@@ -35,9 +39,20 @@ const SessionControl = () => {
     }
   };
 
+  const startCountdown = () => {
+    setCountdown(14);
+    if (countdownInterval.current) clearInterval(countdownInterval.current);
+    countdownInterval.current = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) return 14;
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
   const startSession = async () => {
     if (!selectedClass) {
-      toast.error('Please select a class first');
+      toast.error('Please select a course first');
       return;
     }
 
@@ -49,6 +64,7 @@ const SessionControl = () => {
 
       // Generate initial QR
       await generateQR(session);
+      startCountdown();
 
       // Start QR refresh interval (every 14 seconds, before 15s expiry)
       if (qrRefreshInterval.current) {
@@ -56,9 +72,10 @@ const SessionControl = () => {
       }
       qrRefreshInterval.current = setInterval(() => {
         refreshQR(session);
+        setCountdown(14);
       }, 14000);
 
-      toast.success('Session started successfully');
+      toast.success('Attendance session started');
     } catch (error) {
       console.error('Error starting session:', error);
     } finally {
@@ -71,15 +88,18 @@ const SessionControl = () => {
 
     try {
       await facultyAPI.endSession(activeSession._id);
-      
+
       if (qrRefreshInterval.current) {
         clearInterval(qrRefreshInterval.current);
+      }
+      if (countdownInterval.current) {
+        clearInterval(countdownInterval.current);
       }
 
       setActiveSession(null);
       setQrDataUrl('');
       setSelectedClass('');
-      toast.success('Session ended successfully');
+      toast.success('Session ended');
     } catch (error) {
       console.error('Error ending session:', error);
     }
@@ -87,19 +107,17 @@ const SessionControl = () => {
 
   const generateQR = async (session) => {
     try {
-      // Use the timestamp and signature from the backend response
-      // The backend generates the signature using sessionId:timestamp format
       const qrPayload = JSON.stringify({
         sessionId: session._id,
-        timestamp: session.timestamp, // Use backend's timestamp, not Date.now()
+        timestamp: session.timestamp,
         signature: session.qrSignature,
       });
 
       const dataUrl = await QRCode.toDataURL(qrPayload, {
-        width: 300,
+        width: 320,
         margin: 2,
         color: {
-          dark: '#1f2937',
+          dark: '#0f172a', // slate-900
           light: '#ffffff',
         },
       });
@@ -109,9 +127,8 @@ const SessionControl = () => {
     }
   };
 
-  const refreshQR = async (session) => {
+  const refreshQR = async () => {
     try {
-      // Fetch new QR data from backend
       const response = await facultyAPI.getActiveSession(selectedClass);
       const updatedSession = response.data.data;
       if (updatedSession) {
@@ -135,7 +152,7 @@ const SessionControl = () => {
               present: session.presentCount || prev.present,
             }));
           }
-        } catch (err) {
+        } catch {
           // ignore polling errors
         }
       };
@@ -144,41 +161,54 @@ const SessionControl = () => {
     }
   }, [activeSession, selectedClass]);
 
+  const selectedClassData = classes.find((c) => c._id === selectedClass);
+  const totalStudents = selectedClassData?.students?.length || 0;
+  const attendanceRate = totalStudents > 0 ? Math.round((attendanceStats.present / totalStudents) * 100) : 0;
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
+        <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
+    <div className="space-y-4">
+      {/* Page Header — visible from 20 meters on projector */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Session Control</h1>
-        <p className="text-gray-500 mt-1">Start attendance sessions and display QR codes</p>
+        <h1 className="text-2xl font-bold text-slate-900">
+          {activeSession && selectedClassData
+            ? `${selectedClassData.subjectCode} — ${selectedClassData.name}`
+            : 'Session Control'}
+        </h1>
+        <p className="text-xs text-slate-500 mt-0.5">
+          {activeSession && selectedClassData
+            ? `Room ${selectedClassData.schedule?.[0]?.room || '—'} · Started ${new Date(activeSession.startTime).toLocaleTimeString()}`
+            : 'Start an attendance session and display the QR code'}
+        </p>
       </div>
 
       {!activeSession ? (
         /* Start Session Form */
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 max-w-md">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Start New Session</h2>
-
-          <div className="space-y-4">
+        <div className="bg-white border border-slate-200 rounded-md max-w-md">
+          <div className="px-4 py-3 border-b border-slate-200">
+            <h2 className="text-xs font-semibold text-slate-900 uppercase tracking-wider">Start Attendance Session</h2>
+          </div>
+          <div className="p-4 space-y-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Select Class
+              <label className="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1">
+                Select Course
               </label>
               <select
                 value={selectedClass}
                 onChange={(e) => setSelectedClass(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full h-9 px-3 text-xs border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-700"
               >
-                <option value="">Choose a class...</option>
+                <option value="">Choose a course…</option>
                 {classes.map((cls) => (
                   <option key={cls._id} value={cls._id}>
-                    {cls.name} ({cls.subjectCode}) - {cls.students?.length || 0} students
+                    {cls.subjectCode} — {cls.name} ({cls.students?.length || 0} enrolled)
                   </option>
                 ))}
               </select>
@@ -187,16 +217,16 @@ const SessionControl = () => {
             <button
               onClick={startSession}
               disabled={isStarting || !selectedClass}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center gap-2 h-10 bg-slate-900 text-white rounded-md hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs font-semibold"
             >
               {isStarting ? (
                 <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Starting...
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Starting…
                 </>
               ) : (
                 <>
-                  <Play className="w-5 h-5" />
+                  <Play className="w-4 h-4" />
                   Start Attendance Session
                 </>
               )}
@@ -204,133 +234,146 @@ const SessionControl = () => {
           </div>
         </div>
       ) : (
-        /* Active Session View */
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* QR Code Display */}
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">QR Code</h2>
+        /* Active Session — Lecture Hall Projector HUD */
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* QR Code Display — 320px clean canvas */}
+          <div className="bg-white border border-slate-200 rounded-md">
+            <div className="px-4 py-3 border-b border-slate-200 flex items-center justify-between">
+              <h2 className="text-xs font-semibold text-slate-900 uppercase tracking-wider">QR Code</h2>
               <div className="flex items-center gap-2">
-                <span className="flex items-center gap-1 text-sm text-green-600">
-                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                <span className="flex items-center gap-1.5 text-xs text-emerald-700 font-semibold">
+                  <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
                   Live
                 </span>
                 <button
                   onClick={() => refreshQR(activeSession)}
-                  className="p-2 text-gray-400 hover:text-purple-500 hover:bg-purple-50 rounded-lg"
+                  className="p-1.5 text-slate-400 hover:text-blue-700 hover:bg-blue-50 rounded-md"
+                  title="Refresh QR code"
                 >
-                  <RefreshCw className="w-4 h-4" />
+                  <RefreshCw className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
 
-            <div className="flex flex-col items-center">
+            <div className="flex flex-col items-center p-6">
               {qrDataUrl ? (
                 <div className="relative">
-                  <img
-                    src={qrDataUrl}
-                    alt="Attendance QR Code"
-                    className="w-64 h-64 rounded-lg shadow-lg"
-                  />
-                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-purple-500 text-white px-3 py-1 rounded-full text-xs font-medium">
-                    Refreshes in 15s
+                  {/* Clean 320×320 QR canvas with sharp 2px border */}
+                  <div className="border-2 border-slate-300 rounded-md p-2 bg-white">
+                    <img
+                      src={qrDataUrl}
+                      alt="Attendance QR Code"
+                      className="w-[320px] h-[320px]"
+                    />
+                  </div>
+
+                  {/* SVG Circular Progress Ring — 14s rotation */}
+                  <div className="mt-4 flex items-center justify-center">
+                    <svg className="w-10 h-10 -rotate-90" viewBox="0 0 40 40">
+                      <circle
+                        cx="20" cy="20" r="16"
+                        fill="none"
+                        stroke="#e2e8f0"
+                        strokeWidth="3"
+                      />
+                      <circle
+                        cx="20" cy="20" r="16"
+                        fill="none"
+                        stroke="#1d4ed8"
+                        strokeWidth="3"
+                        strokeDasharray={`${2 * Math.PI * 16}`}
+                        strokeDashoffset={`${2 * Math.PI * 16 * (1 - countdown / 14)}`}
+                        strokeLinecap="round"
+                        className="transition-all duration-1000 ease-linear"
+                      />
+                    </svg>
+                    <span className="ml-2 text-xs font-mono tabular-nums text-slate-600">
+                      {countdown}s
+                    </span>
                   </div>
                 </div>
               ) : (
-                <div className="w-64 h-64 bg-gray-100 rounded-lg flex items-center justify-center">
-                  <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+                <div className="w-[320px] h-[320px] bg-slate-50 border border-slate-200 rounded-md flex items-center justify-center">
+                  <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
                 </div>
               )}
 
-              <p className="mt-4 text-sm text-gray-500 text-center">
-                Students should scan this QR code to mark their attendance
+              <p className="mt-3 text-[11px] text-slate-500 text-center">
+                Rotates every 14s · Dynamic HMAC-SHA256 Signed
               </p>
-
-              <div className="mt-4 flex items-center gap-2 text-sm text-gray-400">
-                <Clock className="w-4 h-4" />
-                <span>
-                  Started at {new Date(activeSession.startTime).toLocaleTimeString()}
-                </span>
-              </div>
             </div>
           </div>
 
-          {/* Session Stats */}
-          <div className="space-y-4">
+          {/* Live Roster Drawer */}
+          <div className="space-y-3">
             {/* Session Info */}
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Session Info</h2>
-              <div className="space-y-3">
+            <div className="bg-white border border-slate-200 rounded-md">
+              <div className="px-4 py-3 border-b border-slate-200">
+                <h2 className="text-xs font-semibold text-slate-900 uppercase tracking-wider">Session Info</h2>
+              </div>
+              <div className="px-4 py-3 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-500">Class</span>
-                  <span className="font-medium text-gray-900">
-                    {classes.find((c) => c._id === selectedClass)?.name}
+                  <span className="text-xs text-slate-500">Course</span>
+                  <span className="text-xs font-semibold text-slate-900">
+                    {selectedClassData?.name}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-500">Session ID</span>
-                  <span className="font-mono text-sm text-gray-900">
+                  <span className="text-xs text-slate-500">Session ID</span>
+                  <span className="font-mono text-xs text-slate-900 tabular-nums">
                     {activeSession._id?.slice(-8).toUpperCase()}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-500">Duration</span>
-                  <span className="font-medium text-gray-900">
-                    {Math.floor((Date.now() - new Date(activeSession.startTime).getTime()) / 60000)} mins
+                  <span className="text-xs text-slate-500">Duration</span>
+                  <span className="text-xs font-semibold text-slate-900 font-mono tabular-nums">
+                    {Math.floor((Date.now() - new Date(activeSession.startTime).getTime()) / 60000)} min
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* Attendance Stats */}
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Live Attendance</h2>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="text-center p-4 bg-green-50 rounded-lg">
-                  <CheckCircle className="w-6 h-6 text-green-500 mx-auto mb-2" />
-                  <p className="text-2xl font-bold text-green-600">{attendanceStats.present}</p>
-                  <p className="text-sm text-gray-500">Present</p>
-                </div>
-                <div className="text-center p-4 bg-red-50 rounded-lg">
-                  <XCircle className="w-6 h-6 text-red-500 mx-auto mb-2" />
-                  <p className="text-2xl font-bold text-red-600">
-                    {(classes.find((c) => c._id === selectedClass)?.students?.length || 0) - attendanceStats.present}
-                  </p>
-                  <p className="text-sm text-gray-500">Absent</p>
-                </div>
-                <div className="text-center p-4 bg-gray-50 rounded-lg">
-                  <Users className="w-6 h-6 text-gray-500 mx-auto mb-2" />
-                  <p className="text-2xl font-bold text-gray-600">
-                    {classes.find((c) => c._id === selectedClass)?.students?.length || 0}
-                  </p>
-                  <p className="text-sm text-gray-500">Total</p>
-                </div>
+            {/* Live Attendance Counter — high contrast */}
+            <div className="bg-white border border-slate-200 rounded-md">
+              <div className="px-4 py-3 border-b border-slate-200">
+                <h2 className="text-xs font-semibold text-slate-900 uppercase tracking-wider">Live Attendance</h2>
               </div>
-
-              {/* Progress Bar */}
-              <div className="mt-4">
-                <div className="flex items-center justify-between text-sm mb-1">
-                  <span className="text-gray-500">Attendance Rate</span>
-                  <span className="font-medium text-gray-900">
-                    {Math.round(
-                      (attendanceStats.present /
-                        (classes.find((c) => c._id === selectedClass)?.students?.length || 1)) *
-                        100
-                    )}
-                    %
-                  </span>
+              <div className="p-4">
+                {/* High-contrast counter visible from back of lecture hall */}
+                <div className="text-center mb-4 px-4 py-3 bg-slate-50 border border-slate-200 rounded-md">
+                  <p className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
+                    Attended: {attendanceStats.present} / {totalStudents} ({attendanceRate}.0%)
+                  </p>
                 </div>
-                <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-green-500 rounded-full transition-all duration-500"
-                    style={{
-                      width: `${
-                        (attendanceStats.present /
-                          (classes.find((c) => c._id === selectedClass)?.students?.length || 1)) *
-                        100
-                      }%`,
-                    }}
-                  />
+
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="text-center px-3 py-2.5 bg-emerald-50 border border-emerald-200 rounded-md">
+                    <CheckCircle className="w-4 h-4 text-emerald-700 mx-auto mb-1" />
+                    <p className="text-lg font-bold text-emerald-700 font-mono tabular-nums">{attendanceStats.present}</p>
+                    <p className="text-[11px] text-slate-600">Present</p>
+                  </div>
+                  <div className="text-center px-3 py-2.5 bg-rose-50 border border-rose-200 rounded-md">
+                    <XCircle className="w-4 h-4 text-rose-700 mx-auto mb-1" />
+                    <p className="text-lg font-bold text-rose-700 font-mono tabular-nums">
+                      {totalStudents - attendanceStats.present}
+                    </p>
+                    <p className="text-[11px] text-slate-600">Absent</p>
+                  </div>
+                  <div className="text-center px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-md">
+                    <Users className="w-4 h-4 text-slate-600 mx-auto mb-1" />
+                    <p className="text-lg font-bold text-slate-900 font-mono tabular-nums">{totalStudents}</p>
+                    <p className="text-[11px] text-slate-600">Total</p>
+                  </div>
+                </div>
+
+                {/* Progress Bar */}
+                <div className="mt-3">
+                  <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-emerald-600 rounded-full transition-all duration-500"
+                      style={{ width: `${attendanceRate}%` }}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -338,9 +381,9 @@ const SessionControl = () => {
             {/* End Session Button */}
             <button
               onClick={endSession}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+              className="w-full flex items-center justify-center gap-2 h-10 bg-rose-700 text-white rounded-md hover:bg-rose-800 transition-colors text-xs font-semibold"
             >
-              <StopCircle className="w-5 h-5" />
+              <StopCircle className="w-4 h-4" />
               End Session
             </button>
           </div>

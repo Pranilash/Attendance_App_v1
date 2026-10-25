@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Download, Smartphone } from 'lucide-react';
+import { Smartphone } from 'lucide-react';
 
 const InstallPwaButton = () => {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
@@ -51,12 +51,12 @@ const InstallPwaButton = () => {
   return (
     <button
       onClick={handleInstallClick}
-      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 transition-all shadow-sm"
-      title="Install Smart Attendance App on your device"
+      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100 text-slate-800 hover:bg-slate-200 border border-slate-300 transition-colors shadow-sm"
+      title="Install Attendance PWA on device"
     >
-      <Smartphone className="w-4 h-4 text-indigo-600" />
-      <span className="hidden sm:inline">Install App</span>
-      <span className="sm:hidden">Install</span>
+      <Smartphone className="w-3.5 h-3.5 text-blue-700" />
+      <span className="hidden sm:inline">Install Offline PWA</span>
+      <span className="sm:hidden">Install PWA</span>
     </button>
   );
 };

@@ -9,16 +9,13 @@ import {
   QrCode,
   History,
   BarChart3,
-  Settings,
   LogOut,
   Menu,
   X,
   ChevronDown,
   User,
   Building2,
-  ClipboardList,
   Camera,
-  UserCircle,
   Network,
 } from 'lucide-react';
 import InstallPwaButton from '../common/InstallPwaButton';
@@ -47,7 +44,7 @@ const DashboardLayout = () => {
       case 'faculty':
         return [
           { name: 'Dashboard', path: '/faculty', icon: LayoutDashboard },
-          { name: 'Classes', path: '/faculty/classes', icon: BookOpen },
+          { name: 'Courses', path: '/faculty/classes', icon: BookOpen },
           { name: 'Session Control', path: '/faculty/session', icon: QrCode },
           { name: 'Reports', path: '/faculty/reports', icon: BarChart3 },
         ];
@@ -65,42 +62,44 @@ const DashboardLayout = () => {
 
   const navItems = getNavItems();
 
-  const getRoleBadgeColor = () => {
+  const getRoleBadge = () => {
     switch (user?.role) {
       case 'admin':
-        return 'bg-red-100 text-red-800';
+        return { label: 'Registrar', color: 'bg-rose-50 text-rose-700 border border-rose-200' };
       case 'faculty':
-        return 'bg-blue-100 text-blue-800';
+        return { label: 'Faculty', color: 'bg-blue-50 text-blue-700 border border-blue-200' };
       case 'student':
-        return 'bg-green-100 text-green-800';
+        return { label: 'Student', color: 'bg-emerald-50 text-emerald-700 border border-emerald-200' };
       default:
-        return 'bg-gray-100 text-gray-800';
+        return { label: user?.role, color: 'bg-slate-100 text-slate-700 border border-slate-200' };
     }
   };
 
+  const roleBadge = getRoleBadge();
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-50">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-40 bg-gray-900/50 lg:hidden"
+          className="fixed inset-0 z-40 bg-slate-900/40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar — institutional Oxford Slate */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-xl transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 w-60 bg-slate-900 transform transition-transform duration-200 ease-in-out lg:translate-x-0 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+          <div className="flex items-center justify-between h-14 px-4 border-b border-slate-800">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 bg-blue-700 rounded-md flex items-center justify-center">
                 <svg
-                  className="w-6 h-6 text-white"
+                  className="w-5 h-5 text-white"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -113,60 +112,60 @@ const DashboardLayout = () => {
                   />
                 </svg>
               </div>
-              <span className="text-lg font-bold text-gray-900">SAS</span>
+              <span className="text-sm font-bold text-white tracking-wide">Smart Attendance</span>
             </div>
             <button
-              className="lg:hidden p-2 rounded-lg hover:bg-gray-100"
+              className="lg:hidden p-1.5 rounded-md text-slate-400 hover:text-white hover:bg-slate-800"
               onClick={() => setSidebarOpen(false)}
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+          <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
             {navItems.map((item) => (
               <NavLink
                 key={item.path}
                 to={item.path}
                 end={item.path === '/admin' || item.path === '/faculty' || item.path === '/student'}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  `flex items-center gap-2.5 px-3 py-2 rounded-md text-xs font-medium transition-colors ${
                     isActive
-                      ? 'bg-purple-50 text-purple-700'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      ? 'bg-slate-800 text-white'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800'
                   }`
                 }
                 onClick={() => setSidebarOpen(false)}
               >
-                <item.icon className="w-5 h-5" />
+                <item.icon className="w-4 h-4" />
                 {item.name}
               </NavLink>
             ))}
           </nav>
 
           {/* User info at bottom */}
-          <div className="p-4 border-t border-gray-200">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                <User className="w-5 h-5 text-gray-500" />
+          <div className="p-3 border-t border-slate-800">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 bg-slate-700 rounded-md flex items-center justify-center">
+                <User className="w-4 h-4 text-slate-300" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">
+                <p className="text-xs font-medium text-slate-200 truncate">
                   {user?.name}
                 </p>
                 <span
-                  className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium capitalize ${getRoleBadgeColor()}`}
+                  className={`inline-flex items-center px-1.5 py-0 rounded text-[10px] font-semibold ${roleBadge.color}`}
                 >
-                  {user?.role}
+                  {roleBadge.label}
                 </span>
               </div>
               <button
                 onClick={handleLogout}
                 title="Sign out"
-                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-slate-800 rounded-md transition-colors"
               >
-                <LogOut className="w-5 h-5" />
+                <LogOut className="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -174,35 +173,35 @@ const DashboardLayout = () => {
       </aside>
 
       {/* Main content */}
-      <div className="lg:pl-64">
-        {/* Top header */}
-        <header className="sticky top-0 z-30 bg-white border-b border-gray-200">
-          <div className="flex items-center justify-between h-16 px-4 sm:px-6">
+      <div className="lg:pl-60">
+        {/* Top header — clean, compact, institutional */}
+        <header className="sticky top-0 z-30 bg-white border-b border-slate-200">
+          <div className="flex items-center justify-between h-12 px-4 sm:px-5">
             {/* Mobile menu button */}
             <button
-              className="lg:hidden p-2 rounded-lg hover:bg-gray-100"
+              className="lg:hidden p-1.5 rounded-md hover:bg-slate-100"
               onClick={() => setSidebarOpen(true)}
             >
-              <Menu className="w-6 h-6" />
+              <Menu className="w-5 h-5 text-slate-600" />
             </button>
 
-            {/* Page title - can be dynamic */}
+            {/* Title */}
             <div className="hidden lg:block">
-              <h1 className="text-lg font-semibold text-gray-900">
+              <h1 className="text-sm font-semibold text-slate-900">
                 Smart Attendance System
               </h1>
             </div>
 
             {/* Right side actions */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <a
                 href="/architecture-diagram.html"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-lg border border-purple-200 transition-colors shadow-sm"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-semibold text-slate-600 bg-slate-50 hover:bg-slate-100 rounded-md border border-slate-200 transition-colors"
                 title="View interactive system architecture diagram"
               >
-                <Network className="w-3.5 h-3.5 text-purple-600" />
+                <Network className="w-3.5 h-3.5 text-slate-500" />
                 <span className="hidden sm:inline">Architecture</span>
               </a>
 
@@ -211,16 +210,16 @@ const DashboardLayout = () => {
               {/* User menu */}
               <div className="relative">
                 <button
-                  className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100"
+                  className="flex items-center gap-1.5 p-1.5 rounded-md hover:bg-slate-100"
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
                 >
-                  <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                    <User className="w-4 h-4 text-gray-500" />
+                  <div className="w-7 h-7 bg-slate-200 rounded-md flex items-center justify-center">
+                    <User className="w-3.5 h-3.5 text-slate-500" />
                   </div>
-                  <span className="hidden sm:block text-sm font-medium text-gray-700">
+                  <span className="hidden sm:block text-xs font-medium text-slate-700">
                     {user?.name}
                   </span>
-                  <ChevronDown className="w-4 h-4 text-gray-400" />
+                  <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
                 </button>
 
                 {/* Dropdown menu */}
@@ -230,28 +229,28 @@ const DashboardLayout = () => {
                       className="fixed inset-0 z-10"
                       onClick={() => setUserMenuOpen(false)}
                     />
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
-                      <div className="px-4 py-2 border-b border-gray-100">
-                        <p className="text-sm font-medium text-gray-900">
+                    <div className="absolute right-0 mt-1 w-48 bg-white rounded-md shadow-lg border border-slate-200 py-1 z-20">
+                      <div className="px-3 py-2 border-b border-slate-100">
+                        <p className="text-xs font-semibold text-slate-900">
                           {user?.name}
                         </p>
-                        <p className="text-xs text-gray-500">{user?.email}</p>
+                        <p className="text-[11px] text-slate-500">{user?.email}</p>
                       </div>
                       <a
                         href="/architecture-diagram.html"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        className="flex items-center gap-2 w-full px-3 py-2 text-xs text-slate-700 hover:bg-slate-50"
                         onClick={() => setUserMenuOpen(false)}
                       >
-                        <Network className="w-4 h-4 text-purple-600" />
+                        <Network className="w-3.5 h-3.5 text-slate-500" />
                         Architecture Map
                       </a>
                       <button
                         onClick={handleLogout}
-                        className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                        className="flex items-center gap-2 w-full px-3 py-2 text-xs text-rose-700 hover:bg-rose-50"
                       >
-                        <LogOut className="w-4 h-4" />
+                        <LogOut className="w-3.5 h-3.5" />
                         Sign out
                       </button>
                     </div>
@@ -263,7 +262,7 @@ const DashboardLayout = () => {
         </header>
 
         {/* Page content */}
-        <main className="p-4 sm:p-6 lg:p-8">
+        <main className="p-4 sm:p-5 lg:p-6">
           <Outlet />
         </main>
       </div>

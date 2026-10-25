@@ -33,6 +33,7 @@
     "dev:backend": "npm run dev --workspace=professional-backend-structure-main",
     "dev:frontend": "npm run dev --workspace=frontend",
     "seed": "npm run seed --workspace=professional-backend-structure-main",
-    "migrate:atlas": "npm run migrate:atlas --workspace=professional-backend-structure-main"
+    "migrate:atlas": "npm run migrate:atlas --workspace=professional-backend-structure-main",
+    "change-password": "npm run change-password --workspace=professional-backend-structure-main --"
   }
 }

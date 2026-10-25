@@ -11,6 +11,7 @@
     "dev:original": "nodemon src/index.js",
     "seed": "node src/scripts/seed.js",
     "migrate:atlas": "node src/scripts/migrateToAtlas.js",
+    "change-password": "node src/scripts/changeAdminPassword.js",
     "test": "node src/scripts/test-thesis-verification.js",
     "test:thesis": "node src/scripts/test-thesis-verification.js"
   },

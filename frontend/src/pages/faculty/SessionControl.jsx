@@ -1,5 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
-import { Play, StopCircle, Users, CheckCircle, XCircle, RefreshCw, Loader2 } from 'lucide-react';
+import {
+  Play,
+  StopCircle,
+  Users,
+  CheckCircle,
+  XCircle,
+  RefreshCw,
+  Loader2,
+  Maximize2,
+  Minimize2,
+} from 'lucide-react';
 import toast from 'react-hot-toast';
 import QRCode from 'qrcode';
 import { facultyAPI } from '../../services/api';
@@ -13,6 +23,8 @@ const SessionControl = () => {
   const [isStarting, setIsStarting] = useState(false);
   const [attendanceStats, setAttendanceStats] = useState({ present: 0, absent: 0, total: 0 });
   const [countdown, setCountdown] = useState(14);
+  const [recentAttendees, setRecentAttendees] = useState([]);
+  const [isProjectorMode, setIsProjectorMode] = useState(false);
   const qrRefreshInterval = useRef(null);
   const countdownInterval = useRef(null);
 
@@ -139,25 +151,48 @@ const SessionControl = () => {
     }
   };
 
-  // Poll real attendance counts from backend
+  // Keyboard listener for exiting projector mode
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && isProjectorMode) {
+        setIsProjectorMode(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isProjectorMode]);
+
+  // Poll real attendance counts and recent verified attendees
   useEffect(() => {
     if (activeSession && selectedClass) {
       const fetchAttendance = async () => {
         try {
-          const response = await facultyAPI.getActiveSession(selectedClass);
-          const session = response.data.data;
+          const [sessionRes, reportRes] = await Promise.all([
+            facultyAPI.getActiveSession(selectedClass),
+            facultyAPI.getSessionReport(activeSession._id).catch(() => null),
+          ]);
+
+          const session = sessionRes.data?.data;
           if (session) {
             setAttendanceStats((prev) => ({
               ...prev,
-              present: session.presentCount || prev.present,
+              present: session.presentCount ?? prev.present,
             }));
+          }
+
+          if (reportRes?.data?.data?.attendance) {
+            setRecentAttendees(reportRes.data.data.attendance.slice().reverse());
           }
         } catch {
           // ignore polling errors
         }
       };
-      const interval = setInterval(fetchAttendance, 5000);
+
+      fetchAttendance();
+      const interval = setInterval(fetchAttendance, 4000);
       return () => clearInterval(interval);
+    } else {
+      setRecentAttendees([]);
     }
   }, [activeSession, selectedClass]);
 
@@ -176,17 +211,39 @@ const SessionControl = () => {
   return (
     <div className="space-y-4">
       {/* Page Header — visible from 20 meters on projector */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">
-          {activeSession && selectedClassData
-            ? `${selectedClassData.subjectCode} — ${selectedClassData.name}`
-            : 'Session Control'}
-        </h1>
-        <p className="text-xs text-slate-500 mt-0.5">
-          {activeSession && selectedClassData
-            ? `Room ${selectedClassData.schedule?.[0]?.room || '—'} · Started ${new Date(activeSession.startTime).toLocaleTimeString()}`
-            : 'Start an attendance session and display the QR code'}
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">
+            {activeSession && selectedClassData
+              ? `${selectedClassData.subjectCode} — ${selectedClassData.name}`
+              : 'Session Control'}
+          </h1>
+          <p className="text-xs text-slate-500 mt-0.5">
+            {activeSession && selectedClassData
+              ? `Room ${selectedClassData.schedule?.[0]?.room || '—'} · Started ${new Date(activeSession.startTime).toLocaleTimeString()}`
+              : 'Start an attendance session and display the QR code'}
+          </p>
+        </div>
+
+        {activeSession && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsProjectorMode(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-700 hover:bg-blue-800 text-white rounded-md text-xs font-semibold shadow-sm transition-colors"
+              title="Enter distraction-free theater mode for lecture projector"
+            >
+              <Maximize2 className="w-3.5 h-3.5" />
+              Projector Mode
+            </button>
+            <button
+              onClick={endSession}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-700 hover:bg-rose-800 text-white rounded-md text-xs font-semibold transition-colors"
+            >
+              <StopCircle className="w-3.5 h-3.5" />
+              End Session
+            </button>
+          </div>
+        )}
       </div>
 
       {!activeSession ? (
@@ -378,6 +435,72 @@ const SessionControl = () => {
               </div>
             </div>
 
+            {/* Real-Time Live Attendees Feed */}
+            <div className="bg-white border border-slate-200 rounded-md">
+              <div className="px-4 py-3 border-b border-slate-200 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <h2 className="text-xs font-semibold text-slate-900 uppercase tracking-wider">
+                    Live Verified Stream
+                  </h2>
+                </div>
+                <span className="font-mono text-[11px] text-slate-500 font-semibold">
+                  {recentAttendees.length} verified
+                </span>
+              </div>
+              <div className="p-3 max-h-64 overflow-y-auto divide-y divide-slate-100">
+                {recentAttendees.length > 0 ? (
+                  recentAttendees.map((att, idx) => (
+                    <div
+                      key={att._id || idx}
+                      className="py-2 first:pt-0 last:pb-0 flex items-center justify-between gap-3 text-xs"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-6 h-6 rounded bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center font-bold text-[10px] shrink-0">
+                          {att.studentId?.name?.charAt(0) || 'S'}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-semibold text-slate-900 truncate">
+                            {att.studentId?.name || 'Enrolled Student'}
+                          </p>
+                          <p className="text-[10px] text-slate-500 font-mono">
+                            {att.studentId?.enrollmentNumber || 'ENR—'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <span className="font-mono text-[11px] text-slate-600 tabular-nums block">
+                          {new Date(att.markedAt || att.timestamp || Date.now()).toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit',
+                          })}
+                        </span>
+                        <div className="inline-flex items-center gap-1 mt-0.5">
+                          <span className="text-[9px] px-1 rounded font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            Face
+                          </span>
+                          {att.bleVerified && (
+                            <span className="text-[9px] px-1 rounded font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                              BLE
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-6 text-slate-400">
+                    <Users className="w-6 h-6 mx-auto mb-1.5 opacity-40 animate-pulse" />
+                    <p className="text-xs">Awaiting incoming student verifications...</p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">
+                      Students scan the QR code and complete biometric verification to appear here.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* End Session Button */}
             <button
               onClick={endSession}
@@ -386,6 +509,135 @@ const SessionControl = () => {
               <StopCircle className="w-4 h-4" />
               End Session
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Lecture Hall Projector Fullscreen Overlay */}
+      {isProjectorMode && activeSession && (
+        <div className="fixed inset-0 z-50 bg-slate-950 text-slate-100 p-6 sm:p-10 flex flex-col justify-between overflow-y-auto">
+          {/* Top Bar */}
+          <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
+              <div>
+                <h1 className="text-2xl font-bold tracking-tight text-white">
+                  {selectedClassData?.subjectCode} — {selectedClassData?.name}
+                </h1>
+                <p className="text-xs text-slate-400 font-mono">
+                  Room {selectedClassData?.schedule?.[0]?.room || 'Lecture Hall'} • Session {activeSession._id?.slice(-8).toUpperCase()}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="px-3 py-1.5 rounded-md bg-slate-900 border border-slate-800 text-right">
+                <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Live Attendance</span>
+                <span className="text-lg font-bold font-mono tabular-nums text-emerald-400">
+                  {attendanceStats.present} / {totalStudents} ({attendanceRate}%)
+                </span>
+              </div>
+              <button
+                onClick={() => setIsProjectorMode(false)}
+                className="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-md text-xs font-semibold transition-colors border border-slate-700"
+              >
+                <Minimize2 className="w-4 h-4" />
+                Exit Fullscreen (Esc)
+              </button>
+            </div>
+          </div>
+
+          {/* Central Main Canvas */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 my-auto items-center py-6 max-w-7xl mx-auto w-full">
+            {/* Big 400px QR Code Display */}
+            <div className="lg:col-span-7 flex flex-col items-center justify-center">
+              <div className="p-4 bg-white rounded-xl shadow-2xl border-4 border-slate-700">
+                {qrDataUrl ? (
+                  <img
+                    src={qrDataUrl}
+                    alt="Attendance QR Code"
+                    className="w-[340px] h-[340px] sm:w-[400px] sm:h-[400px]"
+                  />
+                ) : (
+                  <div className="w-[340px] h-[340px] flex items-center justify-center bg-slate-100">
+                    <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+                  </div>
+                )}
+              </div>
+
+              {/* Countdown Progress Ring and Label */}
+              <div className="mt-5 flex items-center gap-3 text-slate-300">
+                <svg className="w-9 h-9 -rotate-90" viewBox="0 0 40 40">
+                  <circle cx="20" cy="20" r="16" fill="none" stroke="#334155" strokeWidth="3" />
+                  <circle
+                    cx="20" cy="20" r="16" fill="none" stroke="#38bdf8" strokeWidth="3"
+                    strokeDasharray={`${2 * Math.PI * 16}`}
+                    strokeDashoffset={`${2 * Math.PI * 16 * (1 - countdown / 14)}`}
+                    strokeLinecap="round"
+                    className="transition-all duration-1000 ease-linear"
+                  />
+                </svg>
+                <div>
+                  <p className="text-sm font-mono tabular-nums font-semibold text-white">
+                    Rotating in {countdown}s
+                  </p>
+                  <p className="text-[11px] text-slate-400">Dynamic HMAC-SHA256 Token Signature</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Live Ticker Drawer on Right */}
+            <div className="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-xl p-5 flex flex-col h-[460px]">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-300">
+                  Incoming Attendance Stream
+                </span>
+                <span className="text-xs font-mono text-emerald-400 font-bold">
+                  {recentAttendees.length} Verified
+                </span>
+              </div>
+
+              <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+                {recentAttendees.length > 0 ? (
+                  recentAttendees.map((att, idx) => (
+                    <div
+                      key={att._id || idx}
+                      className="px-3 py-2 bg-slate-950/80 border border-slate-800 rounded-lg flex items-center justify-between text-xs"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-7 h-7 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center font-bold text-xs">
+                          {att.studentId?.name?.charAt(0) || 'S'}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-slate-100">{att.studentId?.name}</p>
+                          <p className="text-[10px] font-mono text-slate-400">{att.studentId?.enrollmentNumber}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <span className="font-mono text-xs text-slate-300 tabular-nums block">
+                          {new Date(att.markedAt || att.timestamp || Date.now()).toLocaleTimeString()}
+                        </span>
+                        <span className="text-[10px] text-emerald-400 font-medium">Verified</span>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="h-full flex flex-col items-center justify-center text-center text-slate-500">
+                    <Users className="w-8 h-8 mb-2 opacity-30 animate-pulse" />
+                    <p className="text-xs">Waiting for student check-ins...</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Footer Security Badges */}
+          <div className="flex items-center justify-between border-t border-slate-800 pt-3 text-[11px] text-slate-500 font-mono">
+            <span>IIIT LUCKNOW SMART ATTENDANCE • VII SEM CAPSTONE</span>
+            <div className="flex items-center gap-4">
+              <span>BLE PROXIMITY ACTIVE</span>
+              <span>128-D FACE VECTOR VERIFIED</span>
+            </div>
           </div>
         </div>
       )}

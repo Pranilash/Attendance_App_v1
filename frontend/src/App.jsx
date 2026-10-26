@@ -20,6 +20,7 @@ import FacultyDashboard from './pages/faculty/FacultyDashboard';
 import ManageClasses from './pages/faculty/ManageClasses';
 import SessionControl from './pages/faculty/SessionControl';
 import AttendanceReports from './pages/faculty/AttendanceReports';
+import FacultyTimetable from './pages/faculty/FacultyTimetable';
 
 // Student Pages
 import StudentDashboard from './pages/student/StudentDashboard';
@@ -27,6 +28,7 @@ import ScanQR from './pages/student/ScanQR';
 import FaceVerification from './pages/student/FaceVerification';
 import AttendanceHistory from './pages/student/AttendanceHistory';
 import FaceRegistration from './pages/student/FaceRegistration';
+import StudentTimetable from './pages/student/StudentTimetable';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -112,6 +114,7 @@ function App() {
         <Route path="classes" element={<ManageClasses />} />
         <Route path="session" element={<SessionControl />} />
         <Route path="reports" element={<AttendanceReports />} />
+        <Route path="timetable" element={<FacultyTimetable />} />
       </Route>
 
       {/* Student Routes */}
@@ -128,6 +131,7 @@ function App() {
         <Route path="verify-face/:sessionId" element={<FaceVerification />} />
         <Route path="history" element={<AttendanceHistory />} />
         <Route path="register-face" element={<FaceRegistration />} />
+        <Route path="timetable" element={<StudentTimetable />} />
       </Route>
 
       {/* Default Redirect */}

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Camera, CheckCircle, AlertCircle, Loader2, ArrowLeft, History, ShieldAlert } from 'lucide-react';
+import { Camera, CheckCircle, AlertCircle, Loader2, ArrowLeft, History, ShieldAlert, Printer, ShieldCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
 import FaceCapture from '../../components/face/FaceCapture';
 import { studentAPI } from '../../services/api';
@@ -89,56 +89,105 @@ const FaceVerification = () => {
         </div>
       )}
 
-      {/* Success Transaction Receipt */}
+      {/* Success Transaction Receipt Slip */}
       {verificationResult === 'success' && (
-        <div className="bg-emerald-50 border border-emerald-300 rounded-md p-4 text-xs">
-          <div className="flex items-start gap-3">
-            <CheckCircle className="w-5 h-5 text-emerald-700 mt-0.5 shrink-0" />
-            <div className="flex-1 space-y-2">
+        <div className="bg-white border-2 border-emerald-600 rounded-lg p-5 shadow-sm text-xs space-y-4">
+          <div className="flex items-start justify-between border-b border-dashed border-slate-300 pb-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-emerald-100 border border-emerald-300 flex items-center justify-center text-emerald-700">
+                <CheckCircle className="w-6 h-6" />
+              </div>
               <div>
-                <h3 className="text-sm font-semibold uppercase tracking-wider text-emerald-900">
-                  Attendance Transaction Confirmed
+                <span className="text-[10px] font-mono font-bold tracking-widest text-emerald-700 uppercase block">
+                  Official Verification Record
+                </span>
+                <h3 className="text-base font-bold text-slate-900">
+                  Attendance Confirmed & Immutable
                 </h3>
-                <p className="text-emerald-700 text-xs mt-0.5">
-                  Your attendance has been immutably recorded in the institutional database.
+                <p className="text-[11px] text-slate-500">
+                  Transaction accepted into university attendance ledger
                 </p>
               </div>
+            </div>
 
-              {attendanceData && (
-                <div className="bg-white/80 border border-emerald-200 rounded p-2.5 grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs font-mono">
-                  <div>
-                    <span className="text-[10px] text-slate-500 block">Course Name</span>
-                    <span className="font-semibold text-slate-800">{attendanceData.className || 'Lecture Section'}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-500 block">Timestamp</span>
-                    <span className="text-slate-800">{new Date(attendanceData.timestamp || Date.now()).toLocaleTimeString()}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-500 block">Status</span>
-                    <span className="inline-flex px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800">
-                      PRESENT (VERIFIED)
-                    </span>
-                  </div>
-                </div>
-              )}
+            <div className="text-right font-mono">
+              <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Receipt ID</span>
+              <span className="text-xs font-bold text-slate-900">
+                {attendanceData?.attendanceId?.slice(-10).toUpperCase() || 'TXN-' + Math.random().toString(36).slice(2, 8).toUpperCase()}
+              </span>
+            </div>
+          </div>
 
-              <div className="flex gap-2 pt-1">
-                <button
-                  onClick={handleGoToHistory}
-                  className="h-8 px-3 bg-emerald-800 hover:bg-emerald-900 text-white rounded-md text-xs font-semibold inline-flex items-center gap-1.5 transition-colors"
-                >
-                  <History className="w-3.5 h-3.5" />
-                  View Enrolled Ledger
-                </button>
-                <button
-                  onClick={() => navigate('/student')}
-                  className="h-8 px-3 border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 rounded-md text-xs font-medium transition-colors"
-                >
-                  Return to Dashboard
-                </button>
+          {/* Receipt Data Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 bg-slate-50 border border-slate-200 rounded-md font-mono text-xs">
+            <div>
+              <span className="text-[10px] text-slate-500 uppercase tracking-wider block">Course Title</span>
+              <span className="font-semibold text-slate-900 block truncate">
+                {attendanceData?.className || 'Enrolled Course'}
+              </span>
+              <span className="text-[10px] text-blue-700 font-bold">
+                {attendanceData?.subjectCode || 'CRS-101'}
+              </span>
+            </div>
+
+            <div>
+              <span className="text-[10px] text-slate-500 uppercase tracking-wider block">Timestamp</span>
+              <span className="font-semibold text-slate-800 block">
+                {new Date(attendanceData?.markedAt || attendanceData?.timestamp || Date.now()).toLocaleTimeString()}
+              </span>
+              <span className="text-[10px] text-slate-500">
+                {new Date(attendanceData?.markedAt || attendanceData?.timestamp || Date.now()).toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric',
+                })}
+              </span>
+            </div>
+
+            <div>
+              <span className="text-[10px] text-slate-500 uppercase tracking-wider block">Ledger Status</span>
+              <span className="inline-flex items-center gap-1 mt-0.5 px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                PRESENT (VERIFIED)
+              </span>
+            </div>
+
+            <div>
+              <span className="text-[10px] text-slate-500 uppercase tracking-wider block">Security Protocol</span>
+              <div className="space-y-0.5 text-[10px] text-slate-600 mt-0.5">
+                <span className="flex items-center gap-1 text-emerald-700 font-semibold">
+                  <ShieldCheck className="w-3 h-3" /> Dual-Factor Ingest
+                </span>
+                <span className="block text-slate-500">BLE + 128D Vector</span>
               </div>
             </div>
+          </div>
+
+          {/* Action Row */}
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-100">
+            <div className="flex gap-2">
+              <button
+                onClick={() => window.print()}
+                className="h-8 px-3 border border-slate-300 hover:bg-slate-100 text-slate-700 rounded-md text-xs font-semibold inline-flex items-center gap-1.5 transition-colors"
+                title="Print official receipt"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                Print Slip
+              </button>
+              <button
+                onClick={handleGoToHistory}
+                className="h-8 px-3 bg-emerald-700 hover:bg-emerald-800 text-white rounded-md text-xs font-semibold inline-flex items-center gap-1.5 transition-colors"
+              >
+                <History className="w-3.5 h-3.5" />
+                View Attendance Ledger
+              </button>
+            </div>
+
+            <button
+              onClick={() => navigate('/student')}
+              className="h-8 px-4 border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 rounded-md text-xs font-medium transition-colors"
+            >
+              Return to Dashboard
+            </button>
           </div>
         </div>
       )}

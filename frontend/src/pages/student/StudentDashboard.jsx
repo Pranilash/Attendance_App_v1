@@ -7,6 +7,8 @@ import {
   BookOpen,
   AlertTriangle,
   Loader2,
+  Calculator,
+  CalendarDays,
 } from 'lucide-react';
 import { studentAPI } from '../../services/api';
 import AcademicTable from '../../components/common/AcademicTable';
@@ -22,6 +24,8 @@ const StudentDashboard = () => {
   });
   const [upcomingClasses, setUpcomingClasses] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [simUpcoming, setSimUpcoming] = useState(5);
+  const [simAttended, setSimAttended] = useState(5);
 
   useEffect(() => {
     fetchDashboardData();
@@ -175,17 +179,17 @@ const StudentDashboard = () => {
     <div className="space-y-4">
       {/* Page Header */}
       <div>
-        <h1 className="text-lg font-bold text-slate-900">Student Dashboard</h1>
-        <p className="text-xs text-slate-500 mt-0.5">Enrolled courses and attendance status</p>
+        <h1 className="text-lg font-bold text-slate-900 dark:text-white">Student Dashboard</h1>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Enrolled courses and attendance status</p>
       </div>
 
       {/* Biometric Registration Alert */}
       {!stats.faceRegistered && (
-        <div className="flex items-center gap-2.5 px-4 py-2.5 bg-amber-50 border border-amber-200 rounded-md">
-          <AlertTriangle className="w-4 h-4 text-amber-700 flex-shrink-0" />
+        <div className="flex items-center gap-2.5 px-4 py-2.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-md">
+          <AlertTriangle className="w-4 h-4 text-amber-700 dark:text-amber-400 flex-shrink-0" />
           <div className="flex-1">
-            <p className="text-xs font-semibold text-amber-800">Biometric Registration Required</p>
-            <p className="text-[11px] text-amber-700 mt-0.5">
+            <p className="text-xs font-semibold text-amber-800 dark:text-amber-300">Biometric Registration Required</p>
+            <p className="text-[11px] text-amber-700 dark:text-amber-400 mt-0.5">
               You must register your face to mark attendance via biometric verification.
             </p>
           </div>
@@ -202,9 +206,9 @@ const StudentDashboard = () => {
       {/* Debarment Risk Margin Widget — §4.4 */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
         {/* Primary metric card */}
-        <div className="bg-white border border-slate-200 rounded-md px-4 py-3">
-          <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Attendance Summary</p>
-          <p className="text-xl font-bold text-slate-900 font-mono tabular-nums mt-1">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md px-4 py-3">
+          <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Attendance Summary</p>
+          <p className="text-xl font-bold text-slate-900 dark:text-white font-mono tabular-nums mt-1">
             {stats.presentCount} / {totalConducted} Sessions Attended ({totalConducted > 0 ? stats.attendanceRate.toFixed(1) : '0.0'}%)
           </p>
         </div>
@@ -212,12 +216,12 @@ const StudentDashboard = () => {
         {/* Status pill */}
         <div className={`border rounded-md px-4 py-3 ${
           margin.status === 'eligible'
-            ? 'bg-emerald-50 border-emerald-200'
-            : 'bg-rose-50 border-rose-200'
+            ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800'
+            : 'bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800'
         }`}>
-          <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Eligibility Status</p>
+          <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Eligibility Status</p>
           <p className={`text-sm font-bold mt-1 ${
-            margin.status === 'eligible' ? 'text-emerald-700' : 'text-rose-700'
+            margin.status === 'eligible' ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'
           }`}>
             {margin.status === 'eligible'
               ? 'Statutory Minimum Satisfied'
@@ -226,14 +230,14 @@ const StudentDashboard = () => {
         </div>
 
         {/* Advisory */}
-        <div className="bg-white border border-slate-200 rounded-md px-4 py-3">
-          <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Advisory</p>
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md px-4 py-3">
+          <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Advisory</p>
           {margin.status === 'eligible' ? (
-            <p className="text-xs font-semibold text-slate-700 mt-1">
+            <p className="text-xs font-semibold text-slate-700 dark:text-slate-200 mt-1">
               You can miss {margin.safeAbsences} additional lecture{margin.safeAbsences !== 1 ? 's' : ''} before debarment risk.
             </p>
           ) : (
-            <p className="text-xs font-semibold text-rose-700 mt-1">
+            <p className="text-xs font-semibold text-rose-700 dark:text-rose-400 mt-1">
               You need {margin.needed} consecutive attended session{margin.needed !== 1 ? 's' : ''} to reach 75.0%.
             </p>
           )}
@@ -242,55 +246,55 @@ const StudentDashboard = () => {
 
       {/* Debarment Risk Radar (VII Sem Upgrade 4) */}
       {stats.debarmentRisk && (
-        <div className="bg-white border border-slate-200 rounded-md">
-          <div className="px-4 py-3 border-b border-slate-200 flex items-center justify-between">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md transition-colors">
+          <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-xs font-semibold text-slate-900 uppercase tracking-wider">Debarment Risk Index (DRI)</h2>
+                <h2 className="text-xs font-semibold text-slate-900 dark:text-white uppercase tracking-wider">Debarment Risk Index (DRI)</h2>
                 <span
                   className={`text-[10px] px-2 py-0.5 rounded font-semibold ${
                     stats.debarmentRisk.riskLevel === 'SAFE'
-                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800'
                       : stats.debarmentRisk.riskLevel === 'WARNING'
-                      ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                      : 'bg-rose-50 text-rose-700 border border-rose-200'
+                      ? 'bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800'
+                      : 'bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-800'
                   }`}
                 >
                   {stats.debarmentRisk.riskLevel}
                 </span>
               </div>
-              <p className="text-[11px] text-slate-500 mt-0.5">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                 Predictive cutoff trajectory modeling — statutory attendance ≥ 75%
               </p>
             </div>
             <div className="text-right">
               <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Overall DRI</span>
-              <span className="text-xl font-bold text-slate-900 font-mono tabular-nums">{stats.debarmentRisk.dri}%</span>
+              <span className="text-xl font-bold text-slate-900 dark:text-white font-mono tabular-nums">{stats.debarmentRisk.dri}%</span>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 p-4">
             {stats.debarmentRisk.classes?.map((item) => (
-              <div key={item.classId} className="px-3 py-2.5 border border-slate-200 rounded-md space-y-2">
+              <div key={item.classId} className="px-3 py-2.5 border border-slate-200 dark:border-slate-800 rounded-md space-y-2 bg-slate-50/50 dark:bg-slate-800/30">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-slate-900 truncate">{item.subjectCode}</span>
+                  <span className="text-xs font-semibold text-slate-900 dark:text-white truncate">{item.subjectCode}</span>
                   <span
                     className={`text-[10px] px-1.5 py-0.5 rounded font-semibold ${
                       item.riskLevel === 'SAFE'
-                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800'
                         : item.riskLevel === 'WARNING'
-                        ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                        : 'bg-rose-50 text-rose-700 border border-rose-200'
+                        ? 'bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800'
+                        : 'bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-800'
                     }`}
                   >
                     DRI {item.dri}%
                   </span>
                 </div>
-                <div className="flex justify-between text-[11px] text-slate-500">
-                  <span>Current: <strong className="text-slate-700 font-mono tabular-nums">{item.currentRate}%</strong></span>
-                  <span>Max: <strong className="text-slate-700 font-mono tabular-nums">{item.maxAchievableRate}%</strong></span>
+                <div className="flex justify-between text-[11px] text-slate-500 dark:text-slate-400">
+                  <span>Current: <strong className="text-slate-700 dark:text-slate-200 font-mono tabular-nums">{item.currentRate}%</strong></span>
+                  <span>Max: <strong className="text-slate-700 dark:text-slate-200 font-mono tabular-nums">{item.maxAchievableRate}%</strong></span>
                 </div>
-                <div className="w-full bg-slate-200 rounded-full h-1.5">
+                <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5">
                   <div
                     className={`h-1.5 rounded-full ${
                       item.currentRate >= 75 ? 'bg-emerald-600' : 'bg-rose-600'
@@ -298,14 +302,124 @@ const StudentDashboard = () => {
                     style={{ width: `${Math.min(100, item.currentRate)}%` }}
                   />
                 </div>
-                <p className="text-[11px] text-slate-500">
-                  Need <strong className="text-slate-700 font-mono tabular-nums">{item.requiredSessions}</strong> more attended out of <strong className="text-slate-700 font-mono tabular-nums">{item.remaining}</strong> remaining
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  Need <strong className="text-slate-700 dark:text-slate-200 font-mono tabular-nums">{item.requiredSessions}</strong> more attended out of <strong className="text-slate-700 dark:text-slate-200 font-mono tabular-nums">{item.remaining}</strong> remaining
                 </p>
               </div>
             ))}
           </div>
         </div>
       )}
+
+      {/* "What-If" Predictive Attendance Simulator */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md transition-colors">
+        <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Calculator className="w-4 h-4 text-blue-700 dark:text-blue-400" />
+            <h2 className="text-xs font-semibold text-slate-900 dark:text-white uppercase tracking-wider">
+              &quot;What-If&quot; Attendance Simulator & Trajectory Forecast
+            </h2>
+          </div>
+          <span className="text-[10px] px-2 py-0.5 rounded font-semibold bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-800">
+            Interactive Modeling
+          </span>
+        </div>
+
+        <div className="p-4 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Slider 1: Total Upcoming Lectures */}
+            <div className="space-y-1.5 p-3 bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 rounded-md">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-semibold text-slate-700 dark:text-slate-200">Next Upcoming Lectures:</span>
+                <span className="font-mono font-bold text-slate-900 dark:text-white text-sm">{simUpcoming} lectures</span>
+              </div>
+              <input
+                type="range"
+                min="1"
+                max="20"
+                value={simUpcoming}
+                onChange={(e) => {
+                  const val = Number(e.target.value);
+                  setSimUpcoming(val);
+                  if (simAttended > val) setSimAttended(val);
+                }}
+                className="w-full accent-blue-700 cursor-pointer"
+              />
+              <div className="flex justify-between text-[10px] text-slate-400 font-mono">
+                <span>1 lecture</span>
+                <span>10 lectures</span>
+                <span>20 lectures</span>
+              </div>
+            </div>
+
+            {/* Slider 2: Lectures You Plan to Attend */}
+            <div className="space-y-1.5 p-3 bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 rounded-md">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-semibold text-slate-700 dark:text-slate-200">Lectures You Attend:</span>
+                <span className="font-mono font-bold text-emerald-700 dark:text-emerald-400 text-sm">
+                  {simAttended} of {simUpcoming}
+                </span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max={simUpcoming}
+                value={simAttended}
+                onChange={(e) => setSimAttended(Number(e.target.value))}
+                className="w-full accent-emerald-600 cursor-pointer"
+              />
+              <div className="flex justify-between text-[10px] text-slate-400 font-mono">
+                <span>0 attended (miss all)</span>
+                <span>{simUpcoming} attended (100% presence)</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Simulation Outcome Strip */}
+          {(() => {
+            const simTotalConducted = totalConducted + simUpcoming;
+            const simTotalAttended = stats.presentCount + Math.min(simAttended, simUpcoming);
+            const simRate = simTotalConducted > 0 ? (simTotalAttended / simTotalConducted) * 100 : 0;
+            const simDelta = simRate - (totalConducted > 0 ? stats.attendanceRate : 0);
+            const simIsEligible = simRate >= 75.0;
+
+            return (
+              <div className={`p-4 rounded-md border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                simIsEligible
+                  ? 'bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800 text-emerald-950 dark:text-emerald-100'
+                  : 'bg-rose-50/70 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800 text-rose-950 dark:text-rose-100'
+              }`}>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Projected Attendance:</span>
+                    <span className="text-lg font-bold font-mono tabular-nums">
+                      {simRate.toFixed(1)}%
+                    </span>
+                    <span className={`text-xs font-mono font-bold ${
+                      simDelta >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'
+                    }`}>
+                      ({simDelta >= 0 ? `+${simDelta.toFixed(1)}%` : `${simDelta.toFixed(1)}%`})
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">
+                    If you attend <strong className="text-slate-900 dark:text-white">{simAttended}</strong> out of your next <strong className="text-slate-900 dark:text-white">{simUpcoming}</strong> sessions, your cumulative tally becomes <strong className="text-slate-900 dark:text-white font-mono tabular-nums">{simTotalAttended} / {simTotalConducted}</strong>.
+                  </p>
+                </div>
+
+                <div className="shrink-0">
+                  <span className={`inline-flex items-center px-2.5 py-1 rounded text-xs font-bold ${
+                    simIsEligible
+                      ? 'bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-700'
+                      : 'bg-rose-100 dark:bg-rose-900/60 text-rose-800 dark:text-rose-200 border border-rose-300 dark:border-rose-700'
+                  }`}>
+                    {simIsEligible ? 'Statutory Minimum Satisfied (≥ 75%)' : 'Debarment Warning (< 75%)'}
+                  </span>
+                </div>
+              </div>
+            );
+          })()}
+        </div>
+      </div>
 
       {/* Enrolled Courses Table */}
       <div>
@@ -321,50 +435,60 @@ const StudentDashboard = () => {
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-white border border-slate-200 rounded-md">
-        <div className="px-4 py-3 border-b border-slate-200">
-          <h2 className="text-xs font-semibold text-slate-900 uppercase tracking-wider">Quick Actions</h2>
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md transition-colors">
+        <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800">
+          <h2 className="text-xs font-semibold text-slate-900 dark:text-white uppercase tracking-wider">Quick Actions</h2>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 p-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-2 p-4">
           <a
             href="/student/scan"
-            className="flex items-center gap-2.5 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-md hover:bg-slate-100 transition-colors"
+            className="flex items-center gap-2.5 px-3 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
-            <QrCode className="w-4 h-4 text-slate-600" />
+            <QrCode className="w-4 h-4 text-slate-600 dark:text-slate-300" />
             <div>
-              <span className="text-xs font-semibold text-slate-700 block">Scan QR</span>
-              <span className="text-[11px] text-slate-500">Mark Attendance</span>
+              <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 block">Scan QR</span>
+              <span className="text-[11px] text-slate-500 dark:text-slate-400">Mark Attendance</span>
+            </div>
+          </a>
+          <a
+            href="/student/timetable"
+            className="flex items-center gap-2.5 px-3 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          >
+            <CalendarDays className="w-4 h-4 text-slate-600 dark:text-slate-300" />
+            <div>
+              <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 block">Timetable</span>
+              <span className="text-[11px] text-slate-500 dark:text-slate-400">Weekly Schedule</span>
             </div>
           </a>
           <a
             href="/student/history"
-            className="flex items-center gap-2.5 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-md hover:bg-slate-100 transition-colors"
+            className="flex items-center gap-2.5 px-3 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
-            <Calendar className="w-4 h-4 text-slate-600" />
+            <Calendar className="w-4 h-4 text-slate-600 dark:text-slate-300" />
             <div>
-              <span className="text-xs font-semibold text-slate-700 block">History</span>
-              <span className="text-[11px] text-slate-500">View Records</span>
+              <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 block">History</span>
+              <span className="text-[11px] text-slate-500 dark:text-slate-400">View Records</span>
             </div>
           </a>
           <a
             href="/student/register-face"
-            className="flex items-center gap-2.5 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-md hover:bg-slate-100 transition-colors"
+            className="flex items-center gap-2.5 px-3 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
-            <Camera className="w-4 h-4 text-slate-600" />
+            <Camera className="w-4 h-4 text-slate-600 dark:text-slate-300" />
             <div>
-              <span className="text-xs font-semibold text-slate-700 block">
-                {stats.faceRegistered ? 'Update Biometrics' : 'Register Face'}
+              <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 block">
+                {stats.faceRegistered ? 'Biometrics' : 'Register Face'}
               </span>
-              <span className="text-[11px] text-slate-500">
-                {stats.faceRegistered ? 'Re-enroll data' : 'Required'}
+              <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                {stats.faceRegistered ? 'Re-enroll template' : 'Required'}
               </span>
             </div>
           </a>
-          <div className="flex items-center gap-2.5 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-md">
-            <TrendingUp className="w-4 h-4 text-slate-600" />
+          <div className="flex items-center gap-2.5 px-3 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-md col-span-2 sm:col-span-1">
+            <TrendingUp className="w-4 h-4 text-slate-600 dark:text-slate-300" />
             <div>
-              <span className="text-xs font-semibold text-slate-700 block">Current Attendance</span>
-              <span className="text-[11px] font-mono tabular-nums text-slate-500">
+              <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 block">Current Tally</span>
+              <span className="text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
                 {stats.attendanceRate.toFixed(1)}%
                 {stats.attendanceRate >= 75 ? ' (Eligible)' : ' (At Risk)'}
               </span>

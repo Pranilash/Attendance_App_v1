@@ -1,5 +1,19 @@
 import { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, BookOpen, Users, Search, Loader2, X, UserPlus, Calendar } from 'lucide-react';
+import {
+  Plus,
+  Edit2,
+  Trash2,
+  BookOpen,
+  Users,
+  Search,
+  Loader2,
+  X,
+  CheckCircle,
+  GraduationCap,
+  Clock,
+  ChevronRight,
+  ShieldCheck,
+} from 'lucide-react';
 import toast from 'react-hot-toast';
 import { facultyAPI } from '../../services/api';
 
@@ -11,8 +25,11 @@ const ManageClasses = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [showStudentModal, setShowStudentModal] = useState(false);
+  const [studentModalTab, setStudentModalTab] = useState('enrolled'); // 'enrolled' | 'available'
+  const [studentSearchQuery, setStudentSearchQuery] = useState('');
   const [editingClass, setEditingClass] = useState(null);
   const [selectedClass, setSelectedClass] = useState(null);
+
   const [formData, setFormData] = useState({
     name: '',
     subjectCode: '',
@@ -41,6 +58,7 @@ const ManageClasses = () => {
       setDepartments(deptsRes.data.data);
     } catch (error) {
       console.error('Error fetching data:', error);
+      toast.error('Failed to load courses');
     } finally {
       setIsLoading(false);
     }
@@ -60,7 +78,6 @@ const ManageClasses = () => {
       });
     } else {
       setEditingClass(null);
-      // Set default department to first available
       const defaultDept = departments.length > 0 ? departments[0]._id : '';
       setFormData({
         name: '',
@@ -121,52 +138,63 @@ const ManageClasses = () => {
     try {
       if (editingClass) {
         await facultyAPI.updateClass(editingClass._id, formData);
-        toast.success('Class updated successfully');
+        toast.success('Course updated successfully');
       } else {
         await facultyAPI.createClass(formData);
-        toast.success('Class created successfully');
+        toast.success('Course created successfully');
       }
       handleCloseModal();
       fetchData();
     } catch (error) {
       console.error('Error saving class:', error);
+      toast.error(error.response?.data?.message || 'Failed to save course');
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this class?')) return;
+    if (!window.confirm('Are you sure you want to delete this course? All session records will be archived.')) return;
 
     try {
       await facultyAPI.deleteClass(id);
-      toast.success('Class deleted successfully');
+      toast.success('Course deleted');
       fetchData();
     } catch (error) {
       console.error('Error deleting class:', error);
+      toast.error('Failed to delete course');
     }
   };
 
   const handleOpenStudentModal = (cls) => {
     setSelectedClass(cls);
+    setStudentSearchQuery('');
+    setStudentModalTab('enrolled');
     setShowStudentModal(true);
   };
 
   const handleAddStudent = async (studentId) => {
     try {
       await facultyAPI.addStudentsToClass(selectedClass._id, [studentId]);
-      toast.success('Student added to class');
+      toast.success('Student enrolled in course roster');
+      // Refresh class details
+      const updatedClassRes = await facultyAPI.getClass(selectedClass._id);
+      setSelectedClass(updatedClassRes.data.data);
       fetchData();
     } catch (error) {
       console.error('Error adding student:', error);
+      toast.error('Failed to enroll student');
     }
   };
 
   const handleRemoveStudent = async (classId, studentId) => {
     try {
       await facultyAPI.removeStudentFromClass(classId, studentId);
-      toast.success('Student removed from class');
+      toast.success('Student removed from course roster');
+      const updatedClassRes = await facultyAPI.getClass(classId);
+      setSelectedClass(updatedClassRes.data.data);
       fetchData();
     } catch (error) {
       console.error('Error removing student:', error);
+      toast.error('Failed to remove student');
     }
   };
 
@@ -176,320 +204,321 @@ const ManageClasses = () => {
       cls.subjectCode.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Filter students inside the student modal
+  const enrolledStudents = (selectedClass?.students || []).filter((s) => {
+    const q = studentSearchQuery.toLowerCase();
+    return s.name?.toLowerCase().includes(q) || s.enrollmentNumber?.toLowerCase().includes(q);
+  });
+
+  const availableStudents = students
+    .filter((s) => !selectedClass?.students?.some((cs) => cs._id === s._id))
+    .filter((s) => {
+      const q = studentSearchQuery.toLowerCase();
+      return s.name?.toLowerCase().includes(q) || s.enrollmentNumber?.toLowerCase().includes(q);
+    });
+
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
+      <div className="flex flex-col items-center justify-center h-64 border border-slate-200 rounded-md bg-white">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-700 mb-2" />
+        <span className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
+          Loading Course Catalog...
+        </span>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-200 pb-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Manage Classes</h1>
-          <p className="text-gray-500 mt-1">Create and manage your classes</p>
+          <h1 className="text-lg font-bold text-slate-900">Course Management</h1>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Configure assigned academic courses, weekly recurrence, and student rosters
+          </p>
         </div>
         <button
           onClick={() => handleOpenModal()}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-md text-xs font-semibold shadow-sm transition-colors self-start sm:self-auto"
         >
-          <Plus className="w-5 h-5" />
-          Create Class
+          <Plus className="w-3.5 h-3.5" />
+          Create Course
         </button>
       </div>
 
-      {/* Search */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+      {/* Search Input */}
+      <div className="relative max-w-sm">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
         <input
           type="text"
-          placeholder="Search classes..."
+          placeholder="Filter courses by code or name..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+          className="w-full h-9 pl-9 pr-3 text-xs bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-700 text-slate-900"
         />
       </div>
 
       {/* Classes Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {filteredClasses.map((cls) => (
           <div
             key={cls._id}
-            className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+            className="bg-white rounded-md border border-slate-200 hover:border-slate-300 shadow-sm transition-all flex flex-col justify-between"
           >
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <BookOpen className="w-6 h-6 text-purple-600" />
+            <div className="p-4 space-y-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-9 h-9 bg-blue-50 border border-blue-200 rounded-md flex items-center justify-center text-blue-700 shrink-0">
+                    <BookOpen className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-bold text-slate-900 truncate">{cls.name}</h3>
+                    <p className="text-xs font-mono font-semibold text-blue-700">{cls.subjectCode}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    onClick={() => handleOpenModal(cls)}
+                    className="p-1.5 text-slate-400 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors"
+                    title="Edit course parameters"
+                  >
+                    <Edit2 className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(cls._id)}
+                    className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors"
+                    title="Delete course"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Course Meta Info */}
+              <div className="grid grid-cols-2 gap-2 text-xs text-slate-600 font-mono py-1 border-y border-slate-100">
+                <div>
+                  <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Semester</span>
+                  <span className="font-semibold text-slate-800">Sem {cls.semester || 1}</span>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900">{cls.name}</h3>
-                  <p className="text-sm text-gray-500">{cls.subjectCode}</p>
+                  <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Credits</span>
+                  <span className="font-semibold text-slate-800">{cls.credits || 3} Credits</span>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handleOpenModal(cls)}
-                  className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
-                >
-                  <Edit2 className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => handleDelete(cls._id)}
-                  className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+
+              {/* Schedule Preview */}
+              <div>
+                <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1 flex items-center gap-1">
+                  <Clock className="w-3 h-3 text-slate-400" />
+                  Schedule Recurrence
+                </p>
+                <div className="space-y-1">
+                  {cls.schedule?.map((slot, index) => (
+                    <div key={index} className="text-xs font-mono text-slate-700 bg-slate-50 px-2 py-1 rounded border border-slate-100 flex items-center justify-between">
+                      <span>{slot.day?.slice(0, 3)}: {slot.startTime}–{slot.endTime}</span>
+                      <span className="text-slate-500 text-[11px]">{slot.room || 'Room 101'}</span>
+                    </div>
+                  ))}
+                  {(!cls.schedule || cls.schedule.length === 0) && (
+                    <p className="text-xs text-slate-400 italic">No schedule set</p>
+                  )}
+                </div>
               </div>
             </div>
 
-            {/* Schedule */}
-            <div className="mb-4">
-              <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-                <Calendar className="w-4 h-4" />
-                Schedule
+            {/* Student Roster Footer Bar */}
+            <div className="px-4 py-2.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+              <div className="flex items-center gap-1.5 text-xs text-slate-700 font-medium">
+                <Users className="w-3.5 h-3.5 text-slate-500" />
+                <span className="font-mono font-bold">{cls.students?.length || 0}</span> enrolled
               </div>
-              <div className="space-y-1">
-                {cls.schedule?.map((slot, index) => (
-                  <div key={index} className="text-sm text-gray-600">
-                    {slot.day}: {slot.startTime} - {slot.endTime}
-                    {slot.room && ` (${slot.room})`}
-                  </div>
-                ))}
-              </div>
-            </div>
 
-            {/* Students */}
-            <div className="pt-4 border-t border-gray-100">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2 text-sm text-gray-500">
-                  <Users className="w-4 h-4" />
-                  {cls.students?.length || 0} Students
-                </div>
-                <button
-                  onClick={() => handleOpenStudentModal(cls)}
-                  className="text-sm text-purple-500 hover:text-purple-600"
-                >
-                  <UserPlus className="w-4 h-4" />
-                </button>
-              </div>
-              <div className="flex -space-x-2">
-                {cls.students?.slice(0, 5).map((student, index) => (
-                  <div
-                    key={student._id || index}
-                    className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center border-2 border-white"
-                    title={student.name}
-                  >
-                    <span className="text-xs font-medium text-green-600">
-                      {student.name?.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                ))}
-                {(cls.students?.length || 0) > 5 && (
-                  <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center border-2 border-white">
-                    <span className="text-xs font-medium text-gray-600">
-                      +{cls.students.length - 5}
-                    </span>
-                  </div>
-                )}
-              </div>
+              <button
+                onClick={() => handleOpenStudentModal(cls)}
+                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-blue-700 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors"
+              >
+                Inspect Roster
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
             </div>
           </div>
         ))}
+
+        {filteredClasses.length === 0 && (
+          <div className="col-span-full bg-white border border-slate-200 rounded-md p-10 text-center">
+            <BookOpen className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+            <h3 className="text-sm font-semibold text-slate-900">No Courses Found</h3>
+            <p className="text-xs text-slate-500 mt-1">
+              {searchQuery ? 'Try adjusting your search filter.' : 'Create your first course to begin scheduling attendance sessions.'}
+            </p>
+          </div>
+        )}
       </div>
 
-      {filteredClasses.length === 0 && (
-        <div className="text-center py-12">
-          <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500">No classes found</p>
-        </div>
-      )}
-
-      {/* Class Modal */}
+      {/* Create / Edit Course Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/50" onClick={handleCloseModal} />
-          <div className="relative bg-white rounded-xl p-6 w-full max-w-lg mx-4 shadow-xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">
-                {editingClass ? 'Edit Class' : 'Create Class'}
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg border border-slate-200 shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-150">
+            <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+              <h2 className="text-sm font-bold text-slate-900">
+                {editingClass ? 'Edit Course Parameters' : 'Create New Academic Course'}
               </h2>
-              <button onClick={handleCloseModal} className="p-2 text-gray-400 hover:text-gray-600 rounded-lg">
-                <X className="w-5 h-5" />
+              <button onClick={handleCloseModal} className="p-1 text-slate-400 hover:text-slate-700 rounded-md">
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Class Name *
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  placeholder="e.g., Data Structures"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
+            <form onSubmit={handleSubmit} className="p-5 space-y-3.5">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Subject Code *
+                  <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-700 mb-1">
+                    Course Code
                   </label>
                   <input
                     type="text"
+                    required
+                    placeholder="e.g. CS301"
                     name="subjectCode"
                     value={formData.subjectCode}
                     onChange={handleChange}
-                    required
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    placeholder="e.g., CS201"
+                    className="w-full h-9 px-3 text-xs font-mono uppercase bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-700"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Subject Name *
+                  <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-700 mb-1">
+                    Department
                   </label>
-                  <input
-                    type="text"
-                    name="subjectName"
-                    value={formData.subjectName}
-                    onChange={handleChange}
+                  <select
                     required
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    placeholder="e.g., Data Structures"
-                  />
+                    name="department"
+                    value={formData.department}
+                    onChange={handleChange}
+                    className="w-full h-9 px-3 text-xs bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-700"
+                  >
+                    <option value="">Select Dept…</option>
+                    {departments.map((dept) => (
+                      <option key={dept._id} value={dept._id}>
+                        {dept.name} ({dept.code})
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Department *
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-700 mb-1">
+                  Course Title
                 </label>
-                <select
-                  name="department"
-                  value={formData.department}
-                  onChange={handleChange}
+                <input
+                  type="text"
                   required
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                >
-                  <option value="">Select Department</option>
-                  {departments.map((dept) => (
-                    <option key={dept._id} value={dept._id}>
-                      {dept.name} ({dept.code})
-                    </option>
-                  ))}
-                </select>
+                  placeholder="e.g. Database Management Systems"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  className="w-full h-9 px-3 text-xs bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-700"
+                />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-700 mb-1">
                     Semester
                   </label>
-                  <select
+                  <input
+                    type="number"
+                    min="1"
+                    max="10"
                     name="semester"
                     value={formData.semester}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  >
-                    {[1, 2, 3, 4, 5, 6, 7, 8].map((sem) => (
-                      <option key={sem} value={sem}>{sem}</option>
-                    ))}
-                  </select>
+                    className="w-full h-9 px-3 text-xs font-mono bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-700"
+                  />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-700 mb-1">
                     Credits
                   </label>
-                  <select
+                  <input
+                    type="number"
+                    min="1"
+                    max="6"
                     name="credits"
                     value={formData.credits}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  >
-                    {[1, 2, 3, 4, 5, 6].map((credit) => (
-                      <option key={credit} value={credit}>{credit}</option>
-                    ))}
-                  </select>
+                    className="w-full h-9 px-3 text-xs font-mono bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-700"
+                  />
                 </div>
               </div>
 
-              {/* Schedule */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Schedule
-                </label>
+              {/* Schedule Editor */}
+              <div className="space-y-2 pt-2 border-t border-slate-100">
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-700">
+                    Weekly Schedule Slots
+                  </label>
+                  <button
+                    type="button"
+                    onClick={addScheduleSlot}
+                    className="text-xs font-semibold text-blue-700 hover:text-blue-800"
+                  >
+                    + Add Slot
+                  </button>
+                </div>
+
                 {formData.schedule.map((slot, index) => (
-                  <div key={index} className="flex gap-2 mb-2 flex-wrap">
+                  <div key={index} className="grid grid-cols-12 gap-2 p-2 bg-slate-50 border border-slate-200 rounded-md items-center text-xs">
                     <select
                       value={slot.day}
                       onChange={(e) => handleScheduleChange(index, 'day', e.target.value)}
-                      className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      className="col-span-4 h-8 px-2 text-xs border border-slate-300 rounded bg-white"
                     >
-                      {days.map((day) => (
-                        <option key={day} value={day}>{day}</option>
+                      {days.map((d) => (
+                        <option key={d} value={d}>{d}</option>
                       ))}
                     </select>
+
                     <input
                       type="time"
                       value={slot.startTime}
                       onChange={(e) => handleScheduleChange(index, 'startTime', e.target.value)}
-                      className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      className="col-span-3 h-8 px-1.5 text-xs font-mono border border-slate-300 rounded bg-white"
                     />
-                    <input
-                      type="time"
-                      value={slot.endTime}
-                      onChange={(e) => handleScheduleChange(index, 'endTime', e.target.value)}
-                      className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    />
+
                     <input
                       type="text"
+                      placeholder="Room"
                       value={slot.room}
                       onChange={(e) => handleScheduleChange(index, 'room', e.target.value)}
-                      placeholder="Room"
-                      className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 flex-1 min-w-[80px]"
+                      className="col-span-3 h-8 px-2 text-xs border border-slate-300 rounded bg-white"
                     />
-                    {formData.schedule.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeScheduleSlot(index)}
-                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    )}
+
+                    <button
+                      type="button"
+                      onClick={() => removeScheduleSlot(index)}
+                      className="col-span-2 p-1 text-slate-400 hover:text-rose-600 flex justify-center"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 ))}
-                <button
-                  type="button"
-                  onClick={addScheduleSlot}
-                  className="text-sm text-purple-500 hover:text-purple-600"
-                >
-                  + Add another time slot
-                </button>
               </div>
 
-              <div className="flex gap-3 pt-4">
+              <div className="pt-3 flex items-center justify-end gap-2 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={handleCloseModal}
-                  className="flex-1 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50"
+                  className="px-3 py-1.5 border border-slate-300 text-slate-700 hover:bg-slate-50 rounded-md text-xs font-medium"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600"
+                  className="px-4 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-md text-xs font-semibold"
                 >
-                  {editingClass ? 'Update' : 'Create'}
+                  {editingClass ? 'Save Changes' : 'Create Course'}
                 </button>
               </div>
             </form>
@@ -497,88 +526,156 @@ const ManageClasses = () => {
         </div>
       )}
 
-      {/* Student Modal */}
-      {showStudentModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setShowStudentModal(false)} />
-          <div className="relative bg-white rounded-xl p-6 w-full max-w-lg mx-4 shadow-xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">
-                Manage Students - {selectedClass?.name}
-              </h2>
+      {/* Course Roster Inspector Drawer / Modal */}
+      {showStudentModal && selectedClass && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg border border-slate-200 shadow-xl max-w-2xl w-full max-h-[85vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            {/* Header */}
+            <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-md bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-700">
+                  <GraduationCap className="w-4 h-4" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-bold text-slate-900">
+                    Course Roster: {selectedClass.subjectCode} — {selectedClass.name}
+                  </h2>
+                  <p className="text-[11px] text-slate-500 font-mono">
+                    {selectedClass.students?.length || 0} students enrolled in this section
+                  </p>
+                </div>
+              </div>
+
               <button
                 onClick={() => setShowStudentModal(false)}
-                className="p-2 text-gray-400 hover:text-gray-600 rounded-lg"
+                className="p-1 text-slate-400 hover:text-slate-700 rounded-md"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Current Students */}
-            <div className="mb-4">
-              <h3 className="text-sm font-medium text-gray-700 mb-2">Enrolled Students</h3>
-              <div className="space-y-2 max-h-40 overflow-y-auto">
-                {selectedClass?.students?.map((student) => (
-                  <div
-                    key={student._id}
-                    className="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
-                  >
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                        <span className="text-xs font-medium text-green-600">
-                          {student.name?.charAt(0).toUpperCase()}
-                        </span>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">{student.name}</p>
-                        <p className="text-xs text-gray-500">{student.enrollmentNumber}</p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => handleRemoveStudent(selectedClass._id, student._id)}
-                      className="p-1 text-red-500 hover:bg-red-50 rounded"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
+            {/* Navigation Tabs and Search Bar */}
+            <div className="px-5 py-3 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 bg-white">
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setStudentModalTab('enrolled')}
+                  className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+                    studentModalTab === 'enrolled'
+                      ? 'bg-slate-900 text-white'
+                      : 'text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  Enrolled Students ({selectedClass.students?.length || 0})
+                </button>
+                <button
+                  onClick={() => setStudentModalTab('available')}
+                  className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+                    studentModalTab === 'available'
+                      ? 'bg-slate-900 text-white'
+                      : 'text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  Enroll More Students ({availableStudents.length})
+                </button>
+              </div>
+
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Filter by name or roll no..."
+                  value={studentSearchQuery}
+                  onChange={(e) => setStudentSearchQuery(e.target.value)}
+                  className="h-8 pl-8 pr-3 text-xs border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-700 w-full sm:w-52"
+                />
               </div>
             </div>
 
-            {/* Add Students */}
-            <div>
-              <h3 className="text-sm font-medium text-gray-700 mb-2">Add Students</h3>
-              <div className="space-y-2 max-h-40 overflow-y-auto">
-                {students
-                  .filter(
-                    (s) =>
-                      !selectedClass?.students?.some((cs) => cs._id === s._id)
-                  )
-                  .map((student) => (
+            {/* Student List Content */}
+            <div className="flex-1 overflow-y-auto p-5 divide-y divide-slate-100">
+              {studentModalTab === 'enrolled' ? (
+                enrolledStudents.length > 0 ? (
+                  enrolledStudents.map((student) => (
                     <div
                       key={student._id}
-                      className="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
+                      className="py-2.5 first:pt-0 last:pb-0 flex items-center justify-between gap-3 text-xs"
                     >
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                          <span className="text-xs font-medium text-gray-600">
-                            {student.name?.charAt(0).toUpperCase()}
-                          </span>
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center font-bold text-xs">
+                          {student.name?.charAt(0) || 'S'}
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-gray-900">{student.name}</p>
-                          <p className="text-xs text-gray-500">{student.enrollmentNumber}</p>
+                          <p className="font-semibold text-slate-900">{student.name}</p>
+                          <p className="text-[11px] font-mono text-slate-500">{student.enrollmentNumber || student.email}</p>
                         </div>
                       </div>
+
+                      <div className="flex items-center gap-3">
+                        {student.faceRegistered && (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded">
+                            <ShieldCheck className="w-3 h-3" /> Biometrics Ready
+                          </span>
+                        )}
+                        <button
+                          onClick={() => handleRemoveStudent(selectedClass._id, student._id)}
+                          className="px-2 py-1 text-xs text-rose-600 hover:bg-rose-50 rounded border border-transparent hover:border-rose-200 transition-colors"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-slate-400">
+                    <Users className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                    <p className="text-xs">
+                      {studentSearchQuery ? 'No matching enrolled students.' : 'No students enrolled in this course yet.'}
+                    </p>
+                  </div>
+                )
+              ) : (
+                availableStudents.length > 0 ? (
+                  availableStudents.map((student) => (
+                    <div
+                      key={student._id}
+                      className="py-2.5 first:pt-0 last:pb-0 flex items-center justify-between gap-3 text-xs"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center font-bold text-xs">
+                          {student.name?.charAt(0) || 'S'}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-slate-900">{student.name}</p>
+                          <p className="text-[11px] font-mono text-slate-500">{student.enrollmentNumber || student.email}</p>
+                        </div>
+                      </div>
+
                       <button
                         onClick={() => handleAddStudent(student._id)}
-                        className="p-1 text-green-500 hover:bg-green-50 rounded"
+                        className="inline-flex items-center gap-1 px-3 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded text-xs font-semibold transition-colors"
                       >
-                        <UserPlus className="w-4 h-4" />
+                        <Plus className="w-3.5 h-3.5" />
+                        Enroll
                       </button>
                     </div>
-                  ))}
-              </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-slate-400">
+                    <CheckCircle className="w-8 h-8 mx-auto mb-2 text-emerald-500 opacity-50" />
+                    <p className="text-xs">All registered department students are already enrolled.</p>
+                  </div>
+                )
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="px-5 py-3 border-t border-slate-200 bg-slate-50 flex items-center justify-end">
+              <button
+                onClick={() => setShowStudentModal(false)}
+                className="px-3.5 py-1.5 border border-slate-300 text-slate-700 hover:bg-slate-200 rounded-md text-xs font-medium"
+              >
+                Done
+              </button>
             </div>
           </div>
         </div>

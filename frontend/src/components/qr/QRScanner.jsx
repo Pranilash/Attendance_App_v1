@@ -193,14 +193,14 @@ const QRScanner = ({ onScanSuccess, onScanError }) => {
           <>
             <button
               onClick={resetScanner}
-              className="flex-1 h-9 flex items-center justify-center gap-2 border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 rounded-md text-xs font-semibold transition-colors"
+              className="flex-1 h-9 flex items-center justify-center gap-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-md text-xs font-semibold transition-colors"
             >
               <X className="w-4 h-4" />
               Reset Buffer
             </button>
             <button
               onClick={startScanner}
-              className="flex-1 h-9 flex items-center justify-center gap-2 bg-slate-900 text-white hover:bg-slate-800 rounded-md text-xs font-semibold transition-colors"
+              className="flex-1 h-9 flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-500 text-white rounded-md text-xs font-semibold transition-colors"
             >
               <Camera className="w-4 h-4" />
               Scan Subsequent Code
@@ -211,11 +211,11 @@ const QRScanner = ({ onScanSuccess, onScanError }) => {
 
       {/* Last Result Debug Display */}
       {lastResult && (
-        <div className="p-2.5 bg-slate-100 border border-slate-200 rounded-md">
-          <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
+        <div className="p-2.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md">
+          <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
             Raw Decoded Payload:
           </p>
-          <p className="text-xs font-mono text-slate-800 break-all bg-white p-2 border border-slate-200 rounded">
+          <p className="text-xs font-mono text-slate-800 dark:text-slate-200 break-all bg-white dark:bg-slate-800 p-2 border border-slate-200 dark:border-slate-700 rounded">
             {lastResult}
           </p>
         </div>

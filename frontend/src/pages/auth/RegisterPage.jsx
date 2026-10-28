@@ -107,11 +107,11 @@ const RegisterPage = () => {
 
   return (
     <div className="space-y-5">
-      <div className="border-b border-slate-100 pb-3">
-        <h2 className="text-base font-bold tracking-tight text-slate-900">
+      <div className="border-b border-slate-100 dark:border-slate-800 pb-3">
+        <h2 className="text-base font-bold tracking-tight text-slate-900 dark:text-slate-100">
           {step === 1 ? 'Select Institutional Role' : 'Institutional Registry Details'}
         </h2>
-        <p className="mt-0.5 text-xs text-slate-500">
+        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
           {step === 1
             ? 'Choose your primary university affiliation to configure access permissions'
             : 'Enter official academic identification to provision account in ledger'}
@@ -128,22 +128,22 @@ const RegisterPage = () => {
                 onClick={() => handleRoleSelect(role.id)}
                 className={`flex items-start gap-3 p-3 text-left rounded-md border transition-all ${
                   selectedRole === role.id
-                    ? 'border-blue-700 bg-blue-50/60 ring-1 ring-blue-700'
-                    : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50'
+                    ? 'border-blue-700 bg-blue-50/60 dark:bg-blue-950/40 dark:border-blue-500 ring-1 ring-blue-700 dark:ring-blue-500'
+                    : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/50 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50/50 dark:hover:bg-slate-800'
                 }`}
               >
                 <div
                   className={`w-9 h-9 rounded-md flex items-center justify-center shrink-0 border ${
                     selectedRole === role.id
-                      ? 'bg-blue-700 text-white border-blue-800'
-                      : 'bg-slate-100 text-slate-700 border-slate-200'
+                      ? 'bg-blue-700 text-white border-blue-800 dark:bg-blue-600 dark:border-blue-500'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
                   }`}
                 >
                   <role.icon className="w-5 h-5" />
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-slate-900">{role.name}</p>
-                  <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">{role.description}</p>
+                  <p className="text-xs font-semibold text-slate-900 dark:text-slate-100">{role.name}</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">{role.description}</p>
                 </div>
               </button>
             ))}
@@ -152,7 +152,7 @@ const RegisterPage = () => {
           <button
             onClick={handleContinue}
             disabled={!selectedRole}
-            className="w-full h-9 flex justify-center items-center gap-1.5 px-4 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-md transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+            className="w-full h-9 flex justify-center items-center gap-1.5 px-4 bg-slate-900 hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-500 text-white text-xs font-semibold rounded-md transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
           >
             <span>Proceed to Identity Information</span>
             <ArrowRight className="w-3.5 h-3.5" />
@@ -162,12 +162,12 @@ const RegisterPage = () => {
         <form onSubmit={handleSubmit} className="space-y-3.5">
           {/* Full Name */}
           <div>
-            <label htmlFor="name" className="block text-[11px] font-semibold uppercase tracking-wider text-slate-700 mb-1">
+            <label htmlFor="name" className="block text-[11px] font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
               Full Legal Name
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <User className="h-4 w-4 text-slate-400" />
+                <User className="h-4 w-4 text-slate-400 dark:text-slate-500" />
               </div>
               <input
                 id="name"
@@ -176,7 +176,7 @@ const RegisterPage = () => {
                 required
                 value={formData.name}
                 onChange={handleChange}
-                className="block w-full h-9 pl-9 pr-3 text-xs bg-white border border-slate-300 rounded-md text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-700 transition-colors"
+                className="block w-full h-9 pl-9 pr-3 text-xs bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-md text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-700 transition-colors"
                 placeholder="Dr. Jane Smith or John Doe"
               />
             </div>
@@ -184,12 +184,12 @@ const RegisterPage = () => {
 
           {/* Email Address */}
           <div>
-            <label htmlFor="email" className="block text-[11px] font-semibold uppercase tracking-wider text-slate-700 mb-1">
+            <label htmlFor="email" className="block text-[11px] font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
               Institutional Email Address
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Mail className="h-4 w-4 text-slate-400" />
+                <Mail className="h-4 w-4 text-slate-400 dark:text-slate-500" />
               </div>
               <input
                 id="email"
@@ -199,7 +199,7 @@ const RegisterPage = () => {
                 required
                 value={formData.email}
                 onChange={handleChange}
-                className="block w-full h-9 pl-9 pr-3 text-xs bg-white border border-slate-300 rounded-md text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-700 transition-colors"
+                className="block w-full h-9 pl-9 pr-3 text-xs bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-md text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-700 transition-colors"
                 placeholder="identity@university.edu"
               />
             </div>
@@ -207,12 +207,12 @@ const RegisterPage = () => {
 
           {/* Password */}
           <div>
-            <label htmlFor="password" className="block text-[11px] font-semibold uppercase tracking-wider text-slate-700 mb-1">
+            <label htmlFor="password" className="block text-[11px] font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
               Account Password
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Lock className="h-4 w-4 text-slate-400" />
+                <Lock className="h-4 w-4 text-slate-400 dark:text-slate-500" />
               </div>
               <input
                 id="password"
@@ -222,12 +222,12 @@ const RegisterPage = () => {
                 required
                 value={formData.password}
                 onChange={handleChange}
-                className="block w-full h-9 pl-9 pr-9 text-xs bg-white border border-slate-300 rounded-md text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-700 transition-colors"
+                className="block w-full h-9 pl-9 pr-9 text-xs bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-md text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-700 transition-colors"
                 placeholder="Minimum 8 characters"
               />
               <button
                 type="button"
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600"
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                 onClick={() => setShowPassword(!showPassword)}
               >
                 {showPassword ? (
@@ -241,12 +241,12 @@ const RegisterPage = () => {
 
           {/* Department Selection */}
           <div>
-            <label htmlFor="department" className="block text-[11px] font-semibold uppercase tracking-wider text-slate-700 mb-1">
+            <label htmlFor="department" className="block text-[11px] font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
               Academic Department
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Building2 className="h-4 w-4 text-slate-400" />
+                <Building2 className="h-4 w-4 text-slate-400 dark:text-slate-500" />
               </div>
               <select
                 id="department"
@@ -254,7 +254,7 @@ const RegisterPage = () => {
                 required
                 value={formData.department}
                 onChange={handleChange}
-                className="block w-full h-9 pl-9 pr-8 text-xs bg-white border border-slate-300 rounded-md text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-700 transition-colors appearance-none"
+                className="block w-full h-9 pl-9 pr-8 text-xs bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-md text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-700 transition-colors appearance-none"
               >
                 <option value="">Select Department</option>
                 {departments.map((dept) => (
@@ -270,12 +270,12 @@ const RegisterPage = () => {
           {/* Student Enrollment Number */}
           {selectedRole === 'student' && (
             <div>
-              <label htmlFor="enrollmentNumber" className="block text-[11px] font-semibold uppercase tracking-wider text-slate-700 mb-1">
+              <label htmlFor="enrollmentNumber" className="block text-[11px] font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
                 Matriculation / Enrollment Number
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Hash className="h-4 w-4 text-slate-400" />
+                  <Hash className="h-4 w-4 text-slate-400 dark:text-slate-500" />
                 </div>
                 <input
                   id="enrollmentNumber"
@@ -284,7 +284,7 @@ const RegisterPage = () => {
                   required
                   value={formData.enrollmentNumber}
                   onChange={handleChange}
-                  className="block w-full h-9 pl-9 pr-3 text-xs font-mono bg-white border border-slate-300 rounded-md text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-700 transition-colors uppercase"
+                  className="block w-full h-9 pl-9 pr-3 text-xs font-mono bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-md text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-700 transition-colors uppercase"
                   placeholder="e.g. 0101CS211042"
                 />
               </div>
@@ -294,12 +294,12 @@ const RegisterPage = () => {
           {/* Faculty Employee ID */}
           {selectedRole === 'faculty' && (
             <div>
-              <label htmlFor="employeeId" className="block text-[11px] font-semibold uppercase tracking-wider text-slate-700 mb-1">
+              <label htmlFor="employeeId" className="block text-[11px] font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
                 Faculty Employee ID
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Hash className="h-4 w-4 text-slate-400" />
+                  <Hash className="h-4 w-4 text-slate-400 dark:text-slate-500" />
                 </div>
                 <input
                   id="employeeId"
@@ -308,7 +308,7 @@ const RegisterPage = () => {
                   required
                   value={formData.employeeId}
                   onChange={handleChange}
-                  className="block w-full h-9 pl-9 pr-3 text-xs font-mono bg-white border border-slate-300 rounded-md text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-700 transition-colors uppercase"
+                  className="block w-full h-9 pl-9 pr-3 text-xs font-mono bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-md text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-700 transition-colors uppercase"
                   placeholder="e.g. FAC-2024-009"
                 />
               </div>
@@ -320,7 +320,7 @@ const RegisterPage = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full h-9 flex justify-center items-center gap-1.5 px-4 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+              className="w-full h-9 flex justify-center items-center gap-1.5 px-4 bg-slate-900 hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-500 text-white text-xs font-semibold rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
             >
               {isLoading ? (
                 <>
@@ -338,7 +338,7 @@ const RegisterPage = () => {
             <button
               type="button"
               onClick={() => setStep(1)}
-              className="w-full h-9 flex items-center justify-center gap-1 text-xs text-slate-600 hover:text-slate-900 border border-slate-200 hover:bg-slate-50 rounded-md transition-colors font-medium"
+              className="w-full h-9 flex items-center justify-center gap-1 text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-md transition-colors font-medium"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Back to Role Selection</span>
@@ -348,12 +348,12 @@ const RegisterPage = () => {
       )}
 
       {/* Login Navigation Link */}
-      <div className="pt-2 border-t border-slate-100 text-center">
-        <p className="text-xs text-slate-600">
+      <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-center">
+        <p className="text-xs text-slate-600 dark:text-slate-400">
           Already registered in institutional registry?{' '}
           <Link
             to="/login"
-            className="font-semibold text-blue-700 hover:text-blue-800 hover:underline transition-colors"
+            className="font-semibold text-blue-700 dark:text-blue-400 hover:underline transition-colors"
           >
             Authenticate Session
           </Link>

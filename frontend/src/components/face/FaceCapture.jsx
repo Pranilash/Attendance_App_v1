@@ -493,14 +493,14 @@ const FaceCapture = ({ onCapture, mode = 'verification' }) => {
           <>
             <button
               onClick={stopCamera}
-              className="h-9 px-3 border border-slate-300 text-slate-700 bg-white hover:bg-slate-50 rounded-md text-xs font-medium transition-colors"
+              className="h-9 px-3 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-md text-xs font-medium transition-colors"
             >
               Cancel Sensor
             </button>
             <button
               onClick={performLivenessCheck}
               disabled={!faceDetected}
-              className="flex-1 h-9 flex items-center justify-center gap-2 bg-blue-700 text-white hover:bg-blue-800 disabled:bg-slate-300 disabled:cursor-not-allowed rounded-md text-xs font-semibold transition-colors"
+              className="flex-1 h-9 flex items-center justify-center gap-2 bg-blue-700 hover:bg-blue-800 text-white disabled:bg-slate-300 dark:disabled:bg-slate-800 disabled:cursor-not-allowed rounded-md text-xs font-semibold transition-colors"
             >
               <CheckCircle className="w-4 h-4" />
               {mode === 'registration' ? 'Register Biometric Template' : 'Verify & Mark Attendance'}
@@ -511,7 +511,7 @@ const FaceCapture = ({ onCapture, mode = 'verification' }) => {
         {captureStatus === 'error' && (
           <button
             onClick={resetCapture}
-            className="flex-1 h-9 flex items-center justify-center gap-2 bg-slate-900 text-white hover:bg-slate-800 rounded-md text-xs font-semibold transition-colors"
+            className="flex-1 h-9 flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-500 text-white rounded-md text-xs font-semibold transition-colors shadow-sm"
           >
             <RefreshCw className="w-4 h-4" />
             Re-attempt Verification
@@ -520,11 +520,11 @@ const FaceCapture = ({ onCapture, mode = 'verification' }) => {
       </div>
 
       {/* Institutional Protocol Notice */}
-      <div className="p-3 bg-slate-50 border border-slate-200 rounded-md text-xs text-slate-600 space-y-1">
-        <p className="font-semibold text-slate-800 uppercase tracking-wider text-[11px]">
+      <div className="p-3 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-md text-xs text-slate-600 dark:text-slate-400 space-y-1">
+        <p className="font-semibold text-slate-800 dark:text-slate-200 uppercase tracking-wider text-[11px]">
           Verification Protocol Guidelines:
         </p>
-        <ul className="list-disc list-inside space-y-0.5 text-slate-600">
+        <ul className="list-disc list-inside space-y-0.5 text-slate-600 dark:text-slate-300">
           <li>Position head within the central alignment reticle in balanced light.</li>
           <li>Keep eyes level with the viewfinder and follow dynamic anti-spoofing prompts.</li>
           <li>Anti-spoofing algorithm performs real-time EAR (Eye Aspect Ratio) and yaw delta analysis.</li>

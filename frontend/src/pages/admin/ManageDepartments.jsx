@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, Building2, Search, Loader2, X } from 'lucide-react';
+import { Plus, Edit2, Trash2, Building2, Search, Loader2, X, Users, GraduationCap } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { adminAPI } from '../../services/api';
 
@@ -22,7 +22,7 @@ const ManageDepartments = () => {
   const fetchDepartments = async () => {
     try {
       const response = await adminAPI.getDepartments();
-      setDepartments(response.data.data);
+      setDepartments(response.data.data || []);
     } catch (error) {
       console.error('Error fetching departments:', error);
     } finally {
@@ -70,6 +70,7 @@ const ManageDepartments = () => {
       fetchDepartments();
     } catch (error) {
       console.error('Error saving department:', error);
+      toast.error(error.response?.data?.message || 'Error saving department');
     }
   };
 
@@ -82,6 +83,7 @@ const ManageDepartments = () => {
       fetchDepartments();
     } catch (error) {
       console.error('Error deleting department:', error);
+      toast.error(error.response?.data?.message || 'Error deleting department');
     }
   };
 
@@ -94,81 +96,96 @@ const ManageDepartments = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
+        <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Manage Departments</h1>
-          <p className="text-gray-500 mt-1">Create and manage academic departments</p>
+          <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100">Academic Departments</h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            {filteredDepartments.length} registered academic department{filteredDepartments.length !== 1 ? 's' : ''}
+          </p>
         </div>
         <button
           onClick={() => handleOpenModal()}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors"
+          className="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-900 hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-500 text-white rounded-md transition-colors text-xs font-semibold shadow-sm"
         >
-          <Plus className="w-5 h-5" />
+          <Plus className="w-3.5 h-3.5" />
           Add Department
         </button>
       </div>
 
-      {/* Search */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+      {/* Search Input */}
+      <div className="relative max-w-sm">
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500" />
         <input
           type="text"
-          placeholder="Search departments..."
+          placeholder="Search by department name or code…"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+          className="w-full pl-8 pr-3 h-9 text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-700"
         />
       </div>
 
       {/* Departments Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {filteredDepartments.map((dept) => (
           <div
             key={dept._id}
-            className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+            className="bg-white dark:bg-slate-900 rounded-md p-4 border border-slate-200 dark:border-slate-800 shadow-sm hover:border-slate-300 dark:hover:border-slate-700 transition-all flex flex-col justify-between"
           >
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <Building2 className="w-6 h-6 text-purple-600" />
+            <div>
+              <div className="flex items-start justify-between gap-2 mb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 bg-slate-100 dark:bg-slate-800 rounded-md border border-slate-200 dark:border-slate-700 flex items-center justify-center shrink-0">
+                    <Building2 className="w-4 h-4 text-blue-700 dark:text-blue-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-bold text-slate-900 dark:text-slate-100">{dept.name}</h3>
+                    <span className="font-mono text-[10px] font-semibold text-blue-800 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/40 px-1.5 py-0.5 rounded border border-blue-200 dark:border-blue-800">
+                      {dept.code}
+                    </span>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900">{dept.name}</h3>
-                  <p className="text-sm text-gray-500">{dept.code}</p>
+
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => handleOpenModal(dept)}
+                    className="p-1.5 text-slate-400 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-slate-800 rounded-md transition-colors"
+                    title="Edit Department"
+                  >
+                    <Edit2 className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(dept._id)}
+                    className="p-1.5 text-slate-400 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-slate-800 rounded-md transition-colors"
+                    title="Delete Department"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handleOpenModal(dept)}
-                  className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
-                >
-                  <Edit2 className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => handleDelete(dept._id)}
-                  className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
+
+              {dept.description && (
+                <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 mb-3">
+                  {dept.description}
+                </p>
+              )}
             </div>
-            {dept.description && (
-              <p className="mt-4 text-sm text-gray-600">{dept.description}</p>
-            )}
-            <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between text-sm">
-              <span className="text-gray-500">
-                {dept.facultyCount || 0} Faculty
+
+            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-mono">
+              <span className="inline-flex items-center gap-1">
+                <Users className="w-3 h-3 text-slate-400" />
+                <span className="font-semibold text-slate-700 dark:text-slate-300">{dept.facultyCount || 0}</span> Faculty
               </span>
-              <span className="text-gray-500">
-                {dept.studentCount || 0} Students
+              <span className="inline-flex items-center gap-1">
+                <GraduationCap className="w-3 h-3 text-slate-400" />
+                <span className="font-semibold text-slate-700 dark:text-slate-300">{dept.studentCount || 0}</span> Students
               </span>
             </div>
           </div>
@@ -176,9 +193,10 @@ const ManageDepartments = () => {
       </div>
 
       {filteredDepartments.length === 0 && (
-        <div className="text-center py-12">
-          <Building2 className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500">No departments found</p>
+        <div className="text-center py-12 border border-slate-200 dark:border-slate-800 rounded-md bg-white dark:bg-slate-900">
+          <Building2 className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">No departments found</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Adjust search query or add a new department.</p>
         </div>
       )}
 
@@ -186,25 +204,25 @@ const ManageDepartments = () => {
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div
-            className="absolute inset-0 bg-black/50"
+            className="absolute inset-0 bg-slate-900/40 dark:bg-black/60"
             onClick={handleCloseModal}
           />
-          <div className="relative bg-white rounded-xl p-6 w-full max-w-md mx-4 shadow-xl">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">
-                {editingDepartment ? 'Edit Department' : 'Add Department'}
+          <div className="relative bg-white dark:bg-slate-900 rounded-md p-5 w-full max-w-md mx-4 border border-slate-200 dark:border-slate-800 shadow-xl">
+            <div className="flex items-center justify-between mb-4 border-b border-slate-100 dark:border-slate-800 pb-3">
+              <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                {editingDepartment ? 'Edit Department Record' : 'Add Department'}
               </h2>
               <button
                 onClick={handleCloseModal}
-                className="p-2 text-gray-400 hover:text-gray-600 rounded-lg"
+                className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded-md"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-3.5">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1">
                   Department Name
                 </label>
                 <input
@@ -213,13 +231,13 @@ const ManageDepartments = () => {
                   value={formData.name}
                   onChange={handleChange}
                   required
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  placeholder="e.g., Computer Science"
+                  className="w-full h-9 px-3 text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-700"
+                  placeholder="e.g., Computer Science & Engineering"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1">
                   Department Code
                 </label>
                 <input
@@ -228,13 +246,13 @@ const ManageDepartments = () => {
                   value={formData.code}
                   onChange={handleChange}
                   required
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  placeholder="e.g., CS"
+                  className="w-full h-9 px-3 text-xs font-mono uppercase bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-700"
+                  placeholder="e.g., CSE"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1">
                   Description (Optional)
                 </label>
                 <textarea
@@ -242,24 +260,24 @@ const ManageDepartments = () => {
                   value={formData.description}
                   onChange={handleChange}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  placeholder="Brief description..."
+                  className="w-full p-2.5 text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-700"
+                  placeholder="Academic scope, specializations, or accreditation notes…"
                 />
               </div>
 
-              <div className="flex gap-3 pt-4">
+              <div className="flex gap-2 pt-2">
                 <button
                   type="button"
                   onClick={handleCloseModal}
-                  className="flex-1 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50"
+                  className="flex-1 h-9 px-3 text-xs font-semibold border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-md hover:bg-slate-50 dark:hover:bg-slate-800"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600"
+                  className="flex-1 h-9 px-3 text-xs font-semibold bg-slate-900 hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-500 text-white rounded-md shadow-sm"
                 >
-                  {editingDepartment ? 'Update' : 'Create'}
+                  {editingDepartment ? 'Update Record' : 'Create Department'}
                 </button>
               </div>
             </form>

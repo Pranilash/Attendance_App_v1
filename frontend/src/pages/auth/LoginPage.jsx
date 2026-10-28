@@ -54,11 +54,11 @@ const LoginPage = () => {
 
   return (
     <div className="space-y-5">
-      <div className="border-b border-slate-100 pb-3">
-        <h2 className="text-base font-bold tracking-tight text-slate-900">
+      <div className="border-b border-slate-100 dark:border-slate-800 pb-3">
+        <h2 className="text-base font-bold tracking-tight text-slate-900 dark:text-slate-100">
           Sign In to Portal
         </h2>
-        <p className="mt-0.5 text-xs text-slate-500">
+        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
           Enter your credentials to access your Smart Attendance System account
         </p>
       </div>
@@ -68,13 +68,13 @@ const LoginPage = () => {
         <div>
           <label
             htmlFor="email"
-            className="block text-[11px] font-semibold uppercase tracking-wider text-slate-700 mb-1"
+            className="block text-[11px] font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1"
           >
             Institutional Email Address
           </label>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Mail className="h-4 w-4 text-slate-400" />
+              <Mail className="h-4 w-4 text-slate-400 dark:text-slate-500" />
             </div>
             <input
               id="email"
@@ -84,7 +84,7 @@ const LoginPage = () => {
               required
               value={formData.email}
               onChange={handleChange}
-              className="block w-full h-9 pl-9 pr-3 text-xs bg-white border border-slate-300 rounded-md text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-700 transition-colors"
+              className="block w-full h-9 pl-9 pr-3 text-xs bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-md text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-700 transition-colors"
               placeholder="name@university.edu"
             />
           </div>
@@ -94,13 +94,13 @@ const LoginPage = () => {
         <div>
           <label
             htmlFor="password"
-            className="block text-[11px] font-semibold uppercase tracking-wider text-slate-700 mb-1"
+            className="block text-[11px] font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1"
           >
             Password
           </label>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Lock className="h-4 w-4 text-slate-400" />
+              <Lock className="h-4 w-4 text-slate-400 dark:text-slate-500" />
             </div>
             <input
               id="password"
@@ -110,12 +110,12 @@ const LoginPage = () => {
               required
               value={formData.password}
               onChange={handleChange}
-              className="block w-full h-9 pl-9 pr-9 text-xs bg-white border border-slate-300 rounded-md text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-700 transition-colors"
+              className="block w-full h-9 pl-9 pr-9 text-xs bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-md text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-700 transition-colors"
               placeholder="••••••••••••"
             />
             <button
               type="button"
-              className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600"
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
               onClick={() => setShowPassword(!showPassword)}
             >
               {showPassword ? (
@@ -131,7 +131,7 @@ const LoginPage = () => {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full h-9 flex justify-center items-center gap-2 px-4 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+          className="w-full h-9 flex justify-center items-center gap-2 px-4 bg-slate-900 hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-500 text-white text-xs font-semibold rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
         >
           {isLoading ? (
             <>
@@ -148,12 +148,12 @@ const LoginPage = () => {
       </form>
 
       {/* Register Link */}
-      <div className="pt-2 border-t border-slate-100 text-center">
-        <p className="text-xs text-slate-600">
+      <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-center">
+        <p className="text-xs text-slate-600 dark:text-slate-400">
           Unregistered student or faculty member?{' '}
           <Link
             to="/register"
-            className="font-semibold text-blue-700 hover:text-blue-800 hover:underline transition-colors"
+            className="font-semibold text-blue-700 dark:text-blue-400 hover:underline transition-colors"
           >
             Register Institutional Account
           </Link>

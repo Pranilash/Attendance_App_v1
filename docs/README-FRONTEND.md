@@ -6,7 +6,7 @@ The frontend client is a Progressive Web App (PWA) built with React 18, Vite, an
 
 The client communicates with the Express backend using Axios and manages application state with Zustand. It caches face-api neural network weights through service workers for offline execution.
 
-See the system architecture diagram in [smart-attendance-architecture.html](file:///c:/Users/Dell/Desktop/VS%20Code/Development/Attendance%20App/smart-attendance-architecture.html) or open `/architecture-diagram.html` in your web browser.
+See the system architecture diagram in [smart-attendance-architecture.html](file:///c:/Users/Dell/Desktop/VS%20Code/Development/Attendance%20App/docs/architecture/smart-attendance-architecture.html) or open `/architecture-diagram.html` in your web browser.
 
 ## Core Capabilities
 

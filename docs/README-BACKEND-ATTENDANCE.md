@@ -6,7 +6,7 @@ This document defines the architecture, configuration, and API specifications fo
 
 The backend uses Node.js and Express. MongoDB Atlas stores user, course, and attendance data. Redis caches rotating tokens and session data.
 
-See the system architecture diagram in [smart-attendance-architecture.html](file:///c:/Users/Dell/Desktop/VS%20Code/Development/Attendance%20App/smart-attendance-architecture.html).
+See the system architecture diagram in [smart-attendance-architecture.html](file:///c:/Users/Dell/Desktop/VS%20Code/Development/Attendance%20App/docs/architecture/smart-attendance-architecture.html).
 
 ## Core Verification Pipeline
 

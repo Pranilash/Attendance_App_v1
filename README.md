@@ -7,7 +7,7 @@ The production web application runs live at:
 
 ## Architecture Diagram
 
-View the interactive system architecture diagram in [smart-attendance-architecture.html](file:///c:/Users/Dell/Desktop/VS%20Code/Development/Attendance%20App/smart-attendance-architecture.html). You can also open `/architecture-diagram.html` in your web browser.
+View the interactive system architecture diagram in [smart-attendance-architecture.html](file:///c:/Users/Dell/Desktop/VS%20Code/Development/Attendance%20App/docs/architecture/smart-attendance-architecture.html). You can also open `/architecture-diagram.html` in your web browser.
 
 ## Features
 
@@ -50,16 +50,19 @@ The application runs on Vercel as a unified full-stack monorepo:
 
 ```
 Attendance App/
-├── api/                               # Vercel serverless function entry point
-├── docs/                              # Project documentation and module guides
-├── frontend/                          # React 18 Progressive Web App
+├── api/                                 # Vercel serverless function entry point
+├── docs/                                # Project documentation, architecture & decks
+│   ├── architecture/                    # Standalone interactive system diagrams
+│   ├── presentations/                   # Capstone review slide decks & generator scripts
+│   └── plans/                           # Architecture migration blueprints & prompts
+├── frontend/                            # React 18 Progressive Web App
 │   ├── public/architecture-diagram.html # Interactive architecture diagram
-│   └── src/                           # Components, pages, and state store
+│   └── src/                             # Components, pages, and state store
+├── nginx/                               # Nginx reverse proxy configuration
 ├── professional-backend-structure-main/ # Express backend
-│   └── src/                           # Controllers, models, routes, and scripts
-├── smart-attendance-architecture.html # Standalone architecture diagram
-├── vercel.json                        # Vercel deployment and routing configuration
-└── package.json                       # Monorepo workspaces definition
+│   └── src/                             # Controllers, models, routes, and scripts
+├── vercel.json                          # Vercel deployment and routing configuration
+└── package.json                         # Monorepo workspaces definition
 ```
 
 ## Documentation Index

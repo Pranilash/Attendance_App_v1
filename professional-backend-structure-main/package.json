@@ -7,8 +7,6 @@
   "scripts": {
     "start": "node src/index-attendance.js",
     "dev": "nodemon src/index-attendance.js",
-    "start:original": "node src/index.js",
-    "dev:original": "nodemon src/index.js",
     "seed": "node src/scripts/seed.js",
     "migrate:atlas": "node src/scripts/migrateToAtlas.js",
     "change-password": "node src/scripts/changeAdminPassword.js",
@@ -56,3 +54,4 @@
     "chokidar": "^4.0.3"
   }
 }
+

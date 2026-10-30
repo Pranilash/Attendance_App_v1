@@ -30,6 +30,7 @@
     "@rollup/rollup-linux-x64-musl": "*"
   },
   "scripts": {
+    "lint": "npm run lint --workspace=frontend",
     "build": "npm run build --workspace=frontend",
     "dev:backend": "npm run dev --workspace=professional-backend-structure-main",
     "dev:frontend": "npm run dev --workspace=frontend",

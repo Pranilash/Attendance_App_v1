@@ -1,0 +1,56 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Verify & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install monorepo dependencies
+        run: npm ci --include=optional
+
+      - name: Run frontend ESLint check
+        run: npm run lint --workspace=frontend
+
+      - name: Run frontend Vite PWA build
+        id: vite_build
+        run: |
+          set -o pipefail
+          npm run build --workspace=frontend 2>&1 | tee /tmp/vite-build.log
+
+      - name: Report Build Output
+        if: always()
+        run: |
+          echo "### Vite Build Telemetry" >> $GITHUB_STEP_SUMMARY
+          echo '```text' >> $GITHUB_STEP_SUMMARY
+          if [ -f /tmp/vite-build.log ]; then
+            cat /tmp/vite-build.log >> $GITHUB_STEP_SUMMARY
+          else
+            echo "No build log found" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Run live API regression smoke test
+        run: node professional-backend-structure-main/src/scripts/testAllEndpointsLive.js
+        continue-on-error: true

@@ -16,7 +16,7 @@ services:
       - MONGODB_URI=${MONGODB_URI:-mongodb://mongodb:27017/attendance}
       - ACCESS_TOKEN_SECRET=${ACCESS_TOKEN_SECRET:-attendance_super_secret_access_jwt_key_2026}
       - REFRESH_TOKEN_SECRET=${REFRESH_TOKEN_SECRET:-attendance_super_secret_refresh_jwt_key_2026}
-      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:5173}
+      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:5173,http://localhost}
       - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
       - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
       - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
@@ -70,17 +70,15 @@ services:
     networks:
       - attendance-network
 
-  # NGINX Reverse Proxy (Production)
+  # NGINX Reverse Proxy (Production / Local)
   nginx:
     image: nginx:alpine
     container_name: attendance-nginx
     restart: unless-stopped
     ports:
       - "80:80"
-      - "443:443"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/ssl:/etc/nginx/ssl:ro
     depends_on:
       - backend
       - frontend

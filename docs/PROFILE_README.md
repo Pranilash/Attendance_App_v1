@@ -12,72 +12,70 @@ Focus areas: Distributed full-stack systems, real-time event architectures, clie
 
 ### 1. [Smart Attendance System](https://github.com/Pranilash/Attendance_App_v1)
 *Autonomous Biometric & Dynamic Rotating QR Academic Platform*  
-**Production Deployment**: [https://attendanceappv1.vercel.app](https://attendanceappv1.vercel.app) · **CI/CD Pipeline**: [GitHub Actions (Passing)](https://github.com/Pranilash/Attendance_App_v1/actions/workflows/ci.yml)
+**Production**: [attendanceappv1.vercel.app](https://attendanceappv1.vercel.app) · **CI/CD**: [GitHub Actions (Automated)](https://github.com/Pranilash/Attendance_App_v1/actions/workflows/ci.yml) · **Stack**: React 18 PWA, Express.js, MongoDB Atlas, Redis
 
-A production-grade, multi-tiered attendance platform engineered for university campuses to eliminate proxy attendance, spoofing, and classroom congestion.
+A production-grade, multi-tiered attendance platform engineered for university campuses to eliminate proxy attendance, credential replay, and classroom bottlenecking.
 
-- **Biometric Verification Pipeline**: Computes 128-dimensional facial vectors client-side via WebGL using `@vladmandic/face-api`. Matches reference vectors using cosine similarity ($S \ge 0.60$) with zero raw biometrics transmitted over the network.
-- **Dynamic Liveness Challenge**: Enforces server-coordinated challenge nonces requiring synchronized eye blinks (real EAR thresholding) and head yaw delta verification to reject high-resolution photo and screen replay attacks.
-- **Rotating HMAC Payloads & BLE Proximity**: Generates 14-second rotating QR codes cryptographically signed with HMAC-SHA256, verified in conjunction with Bluetooth Low Energy (BLE) classroom beacon signal strength (RSSI).
-- **Predictive Debarment Risk Engine & Simulator**: Calculates student Debarment Risk Index (DRI) against university attendance thresholds, providing automated faculty watchlists and an interactive what-if attendance simulator with downloadable institutional verification slips.
-- **Academic Timetable & Lecture Theater Mode**: Weekly timetable schedule synchronization across faculty and student portals, coupled with a real-time verification drawer and dedicated full-screen projector theater mode for high-density lecture halls.
-- **Production Architecture & CI/CD**: Unified Vercel serverless monorepo with React 18 PWA (offline Workbox model caching), Express.js, MongoDB Atlas connection pooling, Redis, clean Docker Compose/Nginx proxy, and automated GitHub Actions CI (ESLint, Vite compilation, and 40 live endpoint regression tests).
+- **Client-Side Biometric Verification**: Generates 128-dimensional facial feature vectors directly on client hardware with `@vladmandic/face-api` (WebGL backend). Matches reference vectors using cosine similarity ($S \ge 0.60$) with zero raw biometrics transmitted or stored on cloud servers.
+- **Dynamic Nonce-Based Liveness**: Coordinates single-use server challenge nonces requiring real-time eye aspect ratio (EAR) blink detection and head yaw delta verification to reject high-resolution screen replays and printed photo spoofing.
+- **Proximity & Cryptographic Payloads**: Emits 14-second rotating QR payloads signed with HMAC-SHA256, verified alongside physical Bluetooth Low Energy (BLE) classroom beacon RSSI signal thresholds.
+- **Predictive Debarment Risk Index (DRI)**: Computes real-time student debarment risk against institutional policy thresholds, providing automated faculty watchlists and an interactive what-if simulator with verification receipt slips.
+- **Academic Timetable & Lecture Theater Engine**: Orchestrates weekly course timetables across student and faculty portals, paired with a real-time attendee drawer and full-screen projector theater mode for high-density lecture halls.
+- **Architecture & Operational Reliability**: Serverless monorepo on Vercel with Workbox PWA offline caching, Dockerized Nginx reverse proxy for local/offline deployment, and automated GitHub Actions CI verifying ESLint, Vite compilation, and 40 live endpoint regression tests.
 
 ---
 
 ### 2. [ShareNet](https://github.com/pranilash/sharenet-web)
 *Multi-Tenant Campus Resource Sharing & Circular Economy Platform*  
-**Production Deployment**: [https://sharenet-web-1.onrender.com](https://sharenet-web-1.onrender.com)
+**Production**: [sharenet-web-1.onrender.com](https://sharenet-web-1.onrender.com) · **Stack**: Node.js, Express.js, Socket.IO, PostgreSQL, Redis
 
-A verified peer-to-peer campus marketplace designed to replace fragmented email and chat groups with structured, accountable exchanges.
+A verified peer-to-peer campus marketplace designed to replace fragmented email and chat groups with structured, accountable exchanges across university campuses.
 
-- **Multi-Tenant Domain Scoping**: Isolates catalog feeds and transactions by institutional email domain (`.ac.in`). Supports 100+ Indian university campuses with zero cross-tenant data leakage.
-- **Multi-Signal Recommendation Model**: Scores marketplace items dynamically from user behavior, category affinity, trust, and recency.
+- **Multi-Tenant Domain Scoping**: Strictly isolates catalog feeds and ledger transactions by institutional email domain (`.ac.in`), supporting 100+ university domains with zero cross-tenant data leakage.
+- **Multi-Signal Recommendation Model**: Scores and ranks marketplace listings dynamically using behavioral telemetry, category affinity, trust metrics, and recency decay:
   $$\text{Score} = 3 \cdot \text{CategoryAffinity} + 2 \cdot \text{RecencyBoost} + 1 \cdot \text{TrustSignal} + 1 \cdot \text{ModeRelevance}$$
-- **Real-Time Negotiation Engine**: Provides low-latency chat on Socket.IO with in-stream GPS meetup agreements and delivery confirmations.
-- **Structured Transaction Lifecycle**: Enforces a five-stage contract lifecycle: Request → Agreement → Active → Return → Complete. Includes automated reminders and dispute mediation.
+- **Real-Time Transaction Lifecycle**: Coordinates a structured 5-stage state machine (Request → Agreement → Active → Return → Complete) with low-latency Socket.IO negotiation and in-stream GPS meetup confirmations.
 
 ---
 
 ### 3. [SnapTix](https://github.com/PIYUSH-NAYAK/SnapTix)
 *Decentralized Event Ticketing & Anti-Scalping Protocol*  
-**Award**: HackHazards'25 Track Winner (Top 100 out of 15,000+ teams)
+**Recognition**: HackHazards'25 Track Winner (Top 100 of 15,000+ teams) · **Stack**: Solidity, Base (Ethereum L2), Next.js 15, Ethers.js
 
-A Web3 event ticketing protocol designed to eradicate counterfeit tickets and unregulated secondary market exploitation.
+A Web3 event ticketing protocol designed to eradicate counterfeit tickets and unregulated secondary market exploitation through programmable smart contract enforcement.
 
-- **Smart Contract Protocol**: Authored on-chain ticket contracts in Solidity. Deployed via Hardhat on Base (Ethereum L2) for minimal gas overhead.
-- **Secondary Market Controls**: Enforces resale price caps and automated royalty distribution directly in contract bytecode to stop scalping.
-- **Application Layer**: Next.js 15 App Router architecture with Wagmi and Ethers.js. Uses GROQ AI inference for personalized event matching.
+- **Smart Contract Protocol**: Authored on-chain ERC ticket contracts in Solidity and deployed on Base (Ethereum L2) for sub-cent gas transaction finality.
+- **On-Chain Secondary Market Controls**: Enforces resale price caps and automated creator royalty distributions directly in smart contract bytecode, structurally preventing scalper bot exploitation.
+- **Application Architecture**: Next.js 15 App Router interface integrated with Wagmi and Ethers.js, paired with GROQ AI inference for semantic attendee-event matching.
 
 ---
 
 ### 4. [Gyo.Ai](https://github.com/Pranilash/GyoAi)
 *On-Device Computer Vision Exercise Posture Assistant*  
-**Hackathon**: HackOFiesta v5.0
+**Recognition**: HackOFiesta v5.0 · **Stack**: Flutter, Google MediaPipe, Dart
 
-A physical therapy and exercise tracking assistant focused on real-time biomechanical feedback.
+An on-device biomechanical feedback assistant for exercise form verification and physical therapy guidance.
 
-- **Kinematic Pose Estimation**: Tracks 33 anatomical body landmarks at 60 fps using Google MediaPipe computer vision models.
-- **Real-Time Angle Computation**: Computes joint angles in real time to assess exercise form and trigger immediate audio corrections.
-- **Client Architecture**: Built with Flutter for on-device inference. Keeps camera video private on the device without cloud streaming.
+- **Kinematic Pose Estimation**: Tracks 33 anatomical landmarks at 60 fps using Google MediaPipe vision models running locally on client hardware.
+- **Biomechanical Angle Inference**: Computes multi-joint kinematic vectors in real time to evaluate exercise form and trigger immediate audio corrective cues.
+- **Privacy-Preserving Edge Architecture**: Built with Flutter for zero-network edge processing, ensuring camera feeds never leave user devices.
 
 ---
 
-## Technical Disciplines & Stack
+## Technical Stack & Systems Experience
 
 ```
 Languages:        C++, TypeScript, JavaScript (ES6+), Python, Solidity, Dart, SQL
-Backend & Cloud:  Node.js, Express.js, Socket.IO, Redis, MongoDB Atlas, PostgreSQL, Vercel, Docker, Nginx, GitHub Actions CI/CD
-Frontend & Web:   React 18/19, Next.js (App Router), Vite, Tailwind CSS, Flutter, PWA (Workbox)
-Systems & ML:     face-api.js (WebGL Biometrics), Google MediaPipe, GROQ AI, WebSockets, Git
+Backend & Cloud:  Node.js, Express.js, Socket.IO, Redis, MongoDB Atlas, PostgreSQL, Docker, Nginx, Vercel, GitHub Actions CI/CD
+Frontend & Web:   React 18/19, Next.js (App Router), Vite, Tailwind CSS, Flutter, Progressive Web Apps (PWA)
+Systems & Vision: face-api.js (WebGL Biometrics), Google MediaPipe, WebSockets, REST APIs, Git
 ```
 
 ---
 
 ## Competitive Programming & Algorithms
 
-- **CodeChef 4★** (Peak Rating: 1800+)
-- **Codeforces Specialist**
+- **CodeChef 4★** (Peak Rating: 1800+) · **Codeforces Specialist**
 - **800+ Algorithmic Problems Solved** across LeetCode, Codeforces, CodeChef, and GeeksforGeeks.
 - Core strengths: Graph Theory, Dynamic Programming, Greedy Algorithms, Segment Trees, and Disjoint Set Union (DSU).
 

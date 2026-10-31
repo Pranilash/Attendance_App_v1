@@ -12,15 +12,16 @@ Focus areas: Distributed full-stack systems, real-time event architectures, clie
 
 ### 1. [Smart Attendance System](https://github.com/Pranilash/Attendance_App_v1)
 *Autonomous Biometric & Dynamic Rotating QR Academic Platform*  
-**Production Deployment**: [https://attendanceappv1.vercel.app](https://attendanceappv1.vercel.app)
+**Production Deployment**: [https://attendanceappv1.vercel.app](https://attendanceappv1.vercel.app) · **CI/CD Pipeline**: [GitHub Actions (Passing)](https://github.com/Pranilash/Attendance_App_v1/actions/workflows/ci.yml)
 
-A multi-tiered attendance platform engineered for university campuses to eliminate proxy attendance and classroom congestion.
+A production-grade, multi-tiered attendance platform engineered for university campuses to eliminate proxy attendance, spoofing, and classroom congestion.
 
-- **Biometric Verification Pipeline**: Computes 128-dimensional facial vectors on client hardware with `@vladmandic/face-api`. Matches reference vectors using cosine similarity ($S \ge 0.60$).
-- **Dynamic Liveness Challenge**: Issues single-use server challenge nonces. Requires randomized eye-blink and head-yaw movements to defeat photo and screen replay attacks.
-- **Rotating HMAC Credentials**: Generates 14-second rotating QR payloads signed with HMAC-SHA256. Verifies proximity with classroom Bluetooth Low Energy (BLE) beacons.
-- **Predictive Academic Analytics**: Calculates student Debarment Risk Index (DRI) from university requirements. Generates safe-absence margins and automated faculty watchlists.
-- **Production Architecture**: Runs as a unified Vercel serverless monorepo. Uses React 18 PWA, Express.js, MongoDB Atlas, and Redis. Verified with 40 automated regression tests.
+- **Biometric Verification Pipeline**: Computes 128-dimensional facial vectors client-side via WebGL using `@vladmandic/face-api`. Matches reference vectors using cosine similarity ($S \ge 0.60$) with zero raw biometrics transmitted over the network.
+- **Dynamic Liveness Challenge**: Enforces server-coordinated challenge nonces requiring synchronized eye blinks (real EAR thresholding) and head yaw delta verification to reject high-resolution photo and screen replay attacks.
+- **Rotating HMAC Payloads & BLE Proximity**: Generates 14-second rotating QR codes cryptographically signed with HMAC-SHA256, verified in conjunction with Bluetooth Low Energy (BLE) classroom beacon signal strength (RSSI).
+- **Predictive Debarment Risk Engine & Simulator**: Calculates student Debarment Risk Index (DRI) against university attendance thresholds, providing automated faculty watchlists and an interactive what-if attendance simulator with downloadable institutional verification slips.
+- **Academic Timetable & Lecture Theater Mode**: Weekly timetable schedule synchronization across faculty and student portals, coupled with a real-time verification drawer and dedicated full-screen projector theater mode for high-density lecture halls.
+- **Production Architecture & CI/CD**: Unified Vercel serverless monorepo with React 18 PWA (offline Workbox model caching), Express.js, MongoDB Atlas connection pooling, Redis, clean Docker Compose/Nginx proxy, and automated GitHub Actions CI (ESLint, Vite compilation, and 40 live endpoint regression tests).
 
 ---
 
@@ -66,7 +67,7 @@ A physical therapy and exercise tracking assistant focused on real-time biomecha
 
 ```
 Languages:        C++, TypeScript, JavaScript (ES6+), Python, Solidity, Dart, SQL
-Backend & Cloud:  Node.js, Express.js, Socket.IO, Redis, MongoDB Atlas, PostgreSQL, Vercel, Docker
+Backend & Cloud:  Node.js, Express.js, Socket.IO, Redis, MongoDB Atlas, PostgreSQL, Vercel, Docker, Nginx, GitHub Actions CI/CD
 Frontend & Web:   React 18/19, Next.js (App Router), Vite, Tailwind CSS, Flutter, PWA (Workbox)
 Systems & ML:     face-api.js (WebGL Biometrics), Google MediaPipe, GROQ AI, WebSockets, Git
 ```

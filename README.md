@@ -1,23 +1,32 @@
 # Smart Attendance System
 
+[![CI Pipeline](https://github.com/Pranilash/Attendance_App_v1/actions/workflows/ci.yml/badge.svg)](https://github.com/Pranilash/Attendance_App_v1/actions/workflows/ci.yml)
+[![Production Deployment](https://img.shields.io/badge/Production-Live%20on%20Vercel-success?logo=vercel)](https://attendanceappv1.vercel.app)
+[![PWA Ready](https://img.shields.io/badge/PWA-Enabled%20(Workbox)-blue?logo=pwa)](https://attendanceappv1.vercel.app)
+[![License](https://img.shields.io/badge/License-ISC-informational)](LICENSE)
+
 The Smart Attendance System manages student attendance with rotating QR codes, facial verification, and Bluetooth proximity verification.
 
-The production web application runs live at:
+The production web application runs live at:  
 **[https://attendanceappv1.vercel.app](https://attendanceappv1.vercel.app)**
 
 ## Architecture Diagram
 
-View the interactive system architecture diagram in [smart-attendance-architecture.html](file:///c:/Users/Dell/Desktop/VS%20Code/Development/Attendance%20App/docs/architecture/smart-attendance-architecture.html). You can also open `/architecture-diagram.html` in your web browser.
+View the interactive system architecture diagram in [smart-attendance-architecture.html](docs/architecture/smart-attendance-architecture.html). You can also open `/architecture-diagram.html` in your web browser.
 
 ## Features
 
-- **Role Access Control**: The system provides separate portals for administrators, faculty members, and students.
+- **Role Access Control**: Separate portals for administrators, faculty members, and students.
 - **Rotating QR Codes**: Faculty sessions display HMAC-signed QR codes that refresh every 14 seconds.
-- **Facial Verification**: The system matches webcam face embeddings against registered 128-dimensional vectors. The similarity threshold is 0.60.
-- **Dynamic Liveness**: The system verifies eye blinks and head yaw angles to reject photo spoofing.
-- **Bluetooth Proximity**: The mobile client verifies proximity using classroom Bluetooth beacon signal strength.
-- **Debarment Risk Index**: The analytics engine calculates student debarment risk and updates the faculty watchlist.
-- **Timetable Synchronization**: The scheduler links class attendance windows to weekly timetable slots.
+- **Facial Verification**: Webcam facial embeddings match registered 128-dimensional vectors using cosine similarity ($S \ge 0.60$).
+- **Dynamic Liveness Challenge**: Verifies real-time eye blinks (EAR) and head yaw delta angles to reject photo and screen spoofing.
+- **Bluetooth Proximity**: Mobile clients verify classroom proximity using Bluetooth Low Energy (BLE) beacon signal strength (RSSI).
+- **Debarment Risk Index (DRI)**: Predictive analytics engine calculates student debarment margins and maintains the automated faculty watchlist.
+- **Predictive Simulator**: Interactive student what-if attendance simulator with instant risk projection and downloadable verification slips.
+- **Timetable Synchronization**: Schedule orchestration engine links class attendance windows to weekly timetable slots for faculty and students.
+- **Lecture Theater Mode**: Dedicated full-screen projector display with a real-time live attendance verification ledger for high-density lecture halls.
+- **Institutional Dark Theme**: Persistent dark mode store with keyboard shortcuts (`Cmd/Ctrl + K`, `?`), breadcrumb navigation, and telemetry.
+- **Automated CI/CD Pipeline**: GitHub Actions workflow validates ESLint standards, Vite PWA builds, and executes 40 live endpoint regression tests on every push.
 
 ## Technical Specifications
 
@@ -27,6 +36,8 @@ View the interactive system architecture diagram in [smart-attendance-architectu
 | **Backend Server** | Node.js, Express.js | Serverless REST API on Vercel |
 | **Primary Database** | MongoDB Atlas M0 | Cloud document store for users, classes, and logs |
 | **Biometric Engine** | @vladmandic/face-api | Client-side 128-dimensional facial embeddings |
+| **CI / CD Pipeline** | GitHub Actions | Automated Node 20 LTS workflow with live endpoint verification |
+| **Containerization** | Docker, Nginx Reverse Proxy | Standalone multi-service container setup for offline campus deployments |
 | **Deployment** | Vercel Monorepo | Unified frontend and serverless backend deployment |
 
 ## Production Deployment
@@ -126,6 +137,16 @@ npm run dev:frontend
 
 Open `http://localhost:5173` in your browser.
 
+### 5. Docker Local Deployment (Optional)
+
+Deploy the complete multi-service stack (Nginx, Express Backend, Redis, MongoDB) with Docker:
+
+```bash
+docker-compose up -d --build
+```
+
+Access the application through the reverse proxy at `http://localhost`.
+
 ## System Accounts
 
 | Role | Email Address | Biometric Status | Setup Method |
@@ -156,8 +177,11 @@ This script tests 40 endpoints across authentication, administration, faculty se
 | `POST /api/faculty/session/start` | Faculty | Create a new attendance session |
 | `POST /api/faculty/session/end` | Faculty | Close an active attendance session |
 | `GET /api/faculty/class/:id/debarment-watchlist` | Faculty | Return students below 75 percent attendance |
+| `GET /api/faculty/timetable` | Faculty | Return weekly faculty teaching schedule |
 | `POST /api/student/attendance/verify-qr` | Student | Verify rotating QR token and timestamp |
 | `POST /api/student/attendance/verify-face` | Student | Match face vector and record attendance |
+| `GET /api/student/attendance/analytics` | Student | Return Debarment Risk Index (DRI) analytics |
+| `GET /api/student/timetable` | Student | Return weekly enrolled course schedule |
 | `GET /api/student/face/status` | Student | Return face registration status |
 
 ## License
